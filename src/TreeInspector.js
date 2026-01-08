@@ -459,5 +459,5 @@ function factory(...args){
     return new TreeInspector(...args);
 }
 const out = {'cls': TreeInspector, inspector:factory};
-export {...out}; 
+export out;
 export default out;
