@@ -21,6 +21,8 @@ class TreeInspector {
 	this.rootRef = obj;
 	this.options = options;
 
+	// internal line buffer for dumps
+	this._out = "";
 	// Will hold the enriched parse tree (your {type,name,children,ref,...} nodes)
 	this.tree = null;
 
@@ -34,6 +36,9 @@ class TreeInspector {
 	if (this.options.autoParse !== false) {
 	    this.parse();
 	}
+
+	
+
     }
 
     /**
@@ -201,6 +206,14 @@ class TreeInspector {
 	return info;
     }
 
+    // ---- buffer helpers ----
+    _resetOut() { this._out = ""; }
+    _logLine(text) { this._out += text + "\n"; }
+    _flushOut() {
+	const out = this._out;
+	this._out = "";
+	return out;
+    }
     // ---- print/dump parse tree (validation) ----
     dump({
 	node = this.tree,
