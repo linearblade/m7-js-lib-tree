@@ -360,7 +360,97 @@ class TreeInspector {
     return null;
   }
 
-  // --------- stubs ----------
-  find(partial, opts = {}) { return []; }
-    
+    // --------- stubs ----------
+
+    find(partial, opts = {}) {
+  const {
+    limit = 50,
+    types = null,          // e.g. ["function","class","hash"]
+    pathsOnly = false,     // return array of paths (strings)
+    includeNode = true,    // include node object
+    includeRef = false,    // include node.ref
+    includeSignature = true,
+    match = "name",        // "name" | "path" | "both"
+    rootName = "root",
+    reparseIfMissing = true,
+  } = opts;
+
+  if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
+  if (!this.tree) return [];
+
+  const typeSet = types ? new Set(types) : null;
+
+  // Build a matcher
+  let predicate;
+  if (typeof partial === "function") {
+    predicate = partial;
+  } else if (partial instanceof RegExp) {
+    predicate = (node, path) => {
+      const hay =
+        match === "path" ? path :
+        match === "both" ? `${path} ${node.name}` :
+        node.name;
+      return partial.test(hay);
+    };
+  } else {
+    const needle = String(partial ?? "").toLowerCase();
+    predicate = (node, path) => {
+      const hay =
+        match === "path" ? path :
+        match === "both" ? `${path} ${node.name}` :
+        node.name;
+      return String(hay).toLowerCase().includes(needle);
+    };
+  }
+
+  const results = [];
+  const stack = [{ node: this.tree, path: this.tree.name, parentPath: null }];
+
+  while (stack.length && results.length < limit) {
+    const { node, path, parentPath } = stack.pop();
+    if (!node) continue;
+
+    if (!typeSet || typeSet.has(node.type)) {
+      let ok = false;
+      try {
+        ok = !!predicate(node, path);
+      } catch {
+        ok = false;
+      }
+
+      if (ok) {
+        if (pathsOnly) {
+          results.push(path);
+        } else {
+          const hit = {
+            type: node.type,
+            name: node.name,
+            path,
+            parentPath,
+            childCount: Array.isArray(node.children) ? node.children.length : 0,
+          };
+
+          if (includeNode) hit.node = node;
+          if (includeRef) hit.ref = node.ref;
+          if (includeSignature && node.signature) hit.signature = node.signature;
+
+          results.push(hit);
+        }
+      }
+    }
+
+    // DFS: push children
+    const kids = node.children || [];
+    for (let i = kids.length - 1; i >= 0; i--) {
+      const child = kids[i];
+      stack.push({
+        node: child,
+        path: `${path}.${child.name}`,
+        parentPath: path,
+      });
+    }
+  }
+
+  return results;
+}   
 }
