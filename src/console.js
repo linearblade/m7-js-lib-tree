@@ -115,6 +115,7 @@ function console(lib, {
     function renderNodeLine(label, type, path, faint = false) {
 	const li = document.createElement("li");
 	li.style.cssText = `
+      color: yellow;
       padding: 4px 6px;
       border-radius: 8px;
       cursor: pointer;
