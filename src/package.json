@@ -1,0 +1,18 @@
+{
+    "id": "lib:v098",
+    "title": "m7 legacy lib v098",
+    "assets": [    ],
+    "modules": [
+        { "id": "lib", "type": "js", "url": "lib098.js" },
+        { "id": "manager", "type": "js", "url": "manager.js" }
+    ],
+    "hooks" : {
+        "packageLoad"  : [ "~manager.install"],
+        "packageError" : ["#runners.packageError"],
+        "packageUnload" :["~manager.destroy"],
+        "loadPrepend"  :  null,
+        "loadAppend"   : null,
+        "errorPrepend" : null,
+        "errorAppend"  : null
+    }
+}

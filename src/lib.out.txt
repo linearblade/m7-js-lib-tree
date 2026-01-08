@@ -1,0 +1,221 @@
+📁 root
+   ├─ ƒ p
+   ├─ 📁 app
+   │  ├─ 📁 bootstrap
+   │  │  ├─ 📁 append
+   │  │  │  ├─ ƒ script
+   │  │  │  ├─ ƒ js
+   │  │  │  ├─ ƒ css
+   │  │  │  ├─ ƒ link
+   │  │  │  └─ ƒ default
+   │  │  ├─ 📁 remote
+   │  │  │  └─ 📁 wrapper
+   │  │  │     ├─ ƒ lib
+   │  │  │     ├─ ƒ plugin
+   │  │  │     ├─ ƒ exec
+   │  │  │     ├─ ƒ json
+   │  │  │     ├─ ƒ text
+   │  │  │     ├─ ƒ req
+   │  │  │     ├─ ƒ request
+   │  │  │     ├─ ƒ attach
+   │  │  │     └─ ƒ def
+   │  │  └─ 📁 plugin
+   │  │     ├─ ƒ registerLib
+   │  │     └─ ƒ registerClass
+   │  └─ 📁 load
+   │     ├─ 📁 process
+   │     └─ 📁 apply
+   │        ├─ ƒ json
+   │        ├─ ƒ text
+   │        └─ ƒ default
+   ├─ ƒ fetch
+   ├─ 📁 utils
+   │  ├─ ƒ isArray
+   │  ├─ ƒ toArray
+   │  ├─ ƒ isHash
+   │  ├─ ƒ toHash
+   │  ├─ ƒ hasKeys
+   │  ├─ ƒ isScalar
+   │  ├─ ƒ toString
+   │  ├─ ƒ baseType
+   │  ├─ ƒ isEmpty
+   │  ├─ ƒ hashStrip
+   │  ├─ ƒ merge
+   │  ├─ ƒ deepCopy
+   │  ├─ ƒ linkType
+   │  ├─ ƒ hashOr
+   │  ├─ ƒ getFunction
+   │  ├─ ƒ stripComments
+   │  ├─ ƒ lc
+   │  └─ 📁 base64
+   │     ├─ ƒ decode
+   │     └─ ƒ encode
+   ├─ 📁 array
+   │  ├─ ƒ append
+   │  ├─ ƒ subtract
+   │  ├─ ƒ is
+   │  ├─ ƒ to
+   │  └─ ƒ random
+   ├─ 📁 event
+   │  ├─ ƒ set
+   │  └─ ƒ radioSet
+   ├─ 📁 dom
+   │  ├─ ƒ get
+   │  ├─ ƒ set
+   │  ├─ ƒ is
+   │  ├─ ƒ attempt
+   │  ├─ ƒ isDom
+   │  ├─ ƒ getElement
+   │  ├─ ƒ byId
+   │  ├─ ƒ removeElement
+   │  ├─ ƒ qs
+   │  ├─ ƒ insertAfter
+   │  ├─ 📁 create
+   │  │  ├─ ƒ css
+   │  │  ├─ ƒ link
+   │  │  ├─ ƒ js
+   │  │  └─ ƒ element
+   │  ├─ 📁 append
+   │  │  ├─ ƒ before
+   │  │  ├─ ƒ after
+   │  │  ├─ ƒ prepend
+   │  │  └─ ƒ append
+   │  ├─ 📁 chain
+   │  │  ├─ ƒ defaultConfig
+   │  │  ├─ ƒ run
+   │  │  ├─ ƒ runWith
+   │  │  ├─ ƒ getConfig
+   │  │  └─ ƒ setConfig
+   │  └─ 📁 transform
+   │     ├─ ƒ element
+   │     └─ ƒ list
+   ├─ 📁 args
+   │  ├─ ƒ slice
+   │  ├─ ƒ parse
+   │  └─ ƒ isArguments
+   ├─ 📁 js
+   │  ├─ ƒ lib
+   │  ├─ ƒ exec
+   │  ├─ ƒ execLib
+   │  ├─ ƒ _dispatch
+   │  ├─ ƒ _closure
+   │  ├─ ƒ dispatchClosure
+   │  └─ ƒ default
+   ├─ 📁 sync
+   │  └─ 🏛️ controller
+   ├─ 📁 func
+   │  ├─ ƒ name
+   │  ├─ ƒ wrapper
+   │  ├─ ƒ postWrap
+   │  ├─ ƒ preWrap
+   │  └─ ƒ get
+   ├─ 📁 _http
+   │  ├─ ƒ get
+   │  ├─ ƒ post
+   │  └─ ƒ request
+   ├─ 📁 json
+   │  ├─ ƒ stringify
+   │  ├─ ƒ encode
+   │  ├─ ƒ decode
+   │  └─ ƒ parse
+   ├─ 📁 hash
+   │  ├─ ƒ get
+   │  ├─ ƒ set
+   │  ├─ ƒ legacySet
+   │  ├─ ƒ expand
+   │  ├─ ƒ to
+   │  ├─ ƒ is
+   │  ├─ ƒ append
+   │  ├─ ƒ merge
+   │  └─ ƒ getContext
+   ├─ 📁 bool
+   │  ├─ ƒ isTrue
+   │  ├─ ƒ isFalse
+   │  ├─ ƒ xTrue
+   │  ├─ ƒ xFalse
+   │  ├─ ƒ is
+   │  ├─ ƒ isX
+   │  ├─ ƒ isExplicit
+   │  ├─ ƒ to
+   │  ├─ ƒ xTo
+   │  └─ ƒ explicitTo
+   └─ 📁 site
+      ├─ 📁 design
+      │  └─ 📁 v1
+      │     └─ ƒ setAlert
+      ├─ 📁 localStorage
+      │  ├─ ƒ set
+      │  ├─ ƒ get
+      │  ├─ ƒ delete
+      │  └─ ƒ keys
+      ├─ 📁 delagator
+      │  ├─ ƒ set
+      │  ├─ ƒ remove
+      │  ├─ ƒ list
+      │  └─ ƒ clear
+      ├─ 📁 collapse
+      │  ├─ ƒ defaultConfig
+      │  ├─ ƒ init
+      │  ├─ ƒ getConfig
+      │  └─ ƒ setConfig
+      ├─ 📁 dialog
+      │  ├─ ƒ defaultConfig
+      │  ├─ ƒ init
+      │  ├─ ƒ getConfig
+      │  ├─ ƒ setConfig
+      │  ├─ ƒ triggerOpen
+      │  ├─ ƒ triggerClose
+      │  ├─ ƒ isModalOpen
+      │  └─ ƒ close
+      ├─ 📁 tabs
+      │  ├─ ƒ defaultConfig
+      │  ├─ ƒ init
+      │  ├─ ƒ getConfig
+      │  └─ ƒ setConfig
+      ├─ 📁 toaster
+      │  ├─ ƒ defaultConfig
+      │  ├─ ƒ set
+      │  ├─ ƒ getConfig
+      │  └─ ƒ setConfig
+      ├─ 📁 at
+      │  └─ 📁 v098
+      │     ├─ 📁 response
+      │     │  ├─ ƒ alert
+      │     │  └─ ƒ json
+      │     ├─ 📁 submit
+      │     │  └─ ƒ alert
+      │     ├─ 📁 test
+      │     │  ├─ ƒ throw
+      │     │  ├─ ƒ catch
+      │     │  └─ ƒ dump
+      │     ├─ 📁 custom
+      │     │  ├─ ƒ alert
+      │     │  ├─ ƒ toggle
+      │     │  ├─ ƒ addClass
+      │     │  ├─ ƒ removeClass
+      │     │  └─ ƒ reload
+      │     ├─ 📁 hacks
+      │     │  └─ ƒ backLink
+      │     ├─ 📁 trigger
+      │     │  └─ ƒ click
+      │     ├─ 📁 buffer
+      │     │  ├─ ƒ traverse
+      │     │  ├─ ƒ listData
+      │     │  └─ ƒ errorUnless
+      │     ├─ 📁 transform
+      │     │  └─ ƒ element
+      │     ├─ 📁 dom
+      │     │  ├─ ƒ find
+      │     │  └─ ƒ set
+      │     └─ 📁 intersect
+      │        └─ ƒ observe
+      ├─ 📁 form
+      │  └─ 📁 select
+      │     ├─ ƒ init
+      │     └─ 📁 config
+      │        ├─ ❓ trigger
+      │        └─ ❓ option
+      └─ 📁 proxy
+         ├─ ƒ init
+         └─ 📁 config
+            └─ ❓ trigger
