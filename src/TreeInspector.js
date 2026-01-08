@@ -1,3 +1,4 @@
+import {inlineTreeConsole} from './console.js';
 class TreeInspector {
 
     static ICONS = {
@@ -460,5 +461,5 @@ function factory(...args){
 }
 
 
-export { TreeInspector as cls, factory as inspector };
-export default { cls: TreeInspector, inspector: factory };
+export { TreeInspector as cls, factory as inspector ,inlineTreeConsole as console};
+export default { cls: TreeInspector, inspector: factory , console:inlineTreeConsole};
