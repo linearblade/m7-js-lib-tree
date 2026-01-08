@@ -63,7 +63,7 @@ class TreeInspector {
 	maxDepth = Infinity,
 	depth = 0,
     } = {}) {
-
+	console.log(`parsing with '${name}`);
 	if (depth === 0) {
 	    // explicit flush
 	    this.tree = null;
