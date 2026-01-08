@@ -9,8 +9,8 @@ class TreeInspector {
 	circular: "♻️",   // circular reference
     };
     static NODE_ENRICHERS = {
-	function: v => ({ signature: JsTreeInspector.getFunctionSignature(v) }),
-	class:    v => ({ signature: JsTreeInspector.getFunctionSignature(v) }),
+	function: v => ({ signature: TreeInspector.getFunctionSignature(v) }),
+	class:    v => ({ signature: TreeInspector.getFunctionSignature(v) }),
     };
     /**
      * @param {any} obj - The root object/hash you want to analyze (e.g. your monstrous `lib`)
