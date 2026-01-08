@@ -496,6 +496,7 @@ function renderTreeRow({ node, path, depth, isBranch, isOpen }) {
     border-radius: 8px;
     cursor: default;
     user-select: none;
+    color:yellow;
   `;
   li.onmouseenter = () => li.style.background = "rgba(255,255,255,0.08)";
   li.onmouseleave = () => li.style.background = "transparent";
