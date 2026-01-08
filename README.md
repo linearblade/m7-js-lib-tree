@@ -31,7 +31,13 @@ This is **not** a static analyzer — it reflects **what is actually loaded and 
 
 ---
 
+### Usage
+use the '~' or backticks(`) to toggle minimize or open the panel.
+![m7-js-tree console screenshot](./demo.png)
+
+
 ## 📦 Installation
+
 
 ### Option 1: With M7 library (recommended)
 
