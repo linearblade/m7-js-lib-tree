@@ -358,7 +358,7 @@ function console(lib,
 	state.handler = (e) => {
 	    // only toggle on chosen key (Backquote)
 	    if (!hotkey.includes(e.code)) return;
-
+	    /*
 	    // don't toggle if user is typing in an input/textarea/contenteditable
 	    if (ignoreWhenTyping) {
 		const t = e.target;
@@ -369,7 +369,7 @@ function console(lib,
 		       t.isContentEditable);
 		if (typing) return;
 	    }
-
+	    */
 	    // avoid weird combos
 	    if (e.ctrlKey || e.metaKey || e.altKey) return;
 
