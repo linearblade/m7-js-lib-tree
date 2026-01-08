@@ -458,6 +458,7 @@ class TreeInspector {
 function factory(...args){
     return new TreeInspector(...args);
 }
-const out = {'cls': TreeInspector, inspector:factory};
-export out;
-export default out;
+
+
+export { TreeInspector as cls, factory as inspector };
+export default { cls: TreeInspector, inspector: factory };
