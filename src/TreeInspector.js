@@ -470,7 +470,7 @@ class TreeInspector {
 function factory(...args){
     return new TreeInspector(...args);
 }
-const myconsole = treeConsole.console;
+const openConsole = treeConsole.console;
 treeConsole.install(TreeInspector);
-export { TreeInspector as cls, factory as inspector , console:myconsole};
-export default { cls: TreeInspector, inspector: factory , console:myconsole};
+export { TreeInspector as cls, factory as inspector , openConsole};
+export default { cls: TreeInspector, inspector: factory , console:openConsole};
