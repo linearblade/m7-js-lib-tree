@@ -35,6 +35,35 @@ function console(lib, {
   `;
 
     el.innerHTML = `
+  <!-- HEADER -->
+  <div data-head
+       style="display:flex; align-items:center; gap:10px; padding:10px 12px;
+              border-bottom:1px solid rgba(255,255,255,0.12);">
+    <div style="font-weight:700;">${escapeHtml(title)}</div>
+
+    <input data-q placeholder="find… (name or path)" style="
+      flex:1; background: rgba(255,255,255,0.08); color:#fff;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+      padding: 6px 8px; outline: none;
+    "/>
+
+    <button data-reparse style="${btnCss()}">reparse</button>
+    <button data-close style="${btnCss()}">×</button>
+  </div>
+
+  <!-- BODY -->
+  <div data-body
+       style="display:grid; grid-template-columns: 1.1fr 1fr;
+              height: calc(100% - 46px);">
+    <div data-tree
+         style="overflow:auto; padding:10px 12px;
+                border-right:1px solid rgba(255,255,255,0.12);"></div>
+    <div data-detail
+         style="overflow:auto; padding:10px 12px;"></div>
+  </div>
+`;
+    /*
+    el.innerHTML = `
     <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.12);">
       <div style="font-weight:700;">${escapeHtml(title)}</div>
       <input data-q placeholder="find… (name or path)" style="
@@ -50,7 +79,7 @@ function console(lib, {
       <div data-tree style="overflow:auto; padding:10px 12px; border-right:1px solid rgba(255,255,255,0.12);"></div>
       <div data-detail style="overflow:auto; padding:10px 12px;"></div>
     </div>
-  `;
+  `;*/
 
     const treeEl = el.querySelector("[data-tree]");
     const detailEl = el.querySelector("[data-detail]");
