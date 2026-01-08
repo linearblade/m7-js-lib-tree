@@ -1,17 +1,17 @@
-# 📘 M7-JS-LIB-098 Use Policy
+# 📘 M7-JS-LIB-TREE Use Policy
 
-This document outlines how you may use M7-JS-LIB-098 under the **Moderate Team License (MTL-10)** and what is expected of you as a user.
+This document outlines how you may use M7-JS-LIB-TREE under the **Moderate Team License (MTL-10)** and what is expected of you as a user.
 
 ---
 
 ## ✅ Free Use — What You Can Do
 
-You may use M7-JS-LIB-098 **for free** if you fall under any of the following categories:
+You may use M7-JS-LIB-TREE **for free** if you fall under any of the following categories:
 
 * **Individuals** using it for personal projects, learning, or experimentation
 * **Academic institutions or researchers** using it for teaching, papers, or labs
 * **Nonprofits and NGOs** using it internally without revenue generation
-* **Startups or companies** with **10 or fewer users** of M7-JS-LIB-098 internally
+* **Startups or companies** with **10 or fewer users** of M7-JS-LIB-TREE internally
 
   * This includes development, deployment, and operational use
 
@@ -21,11 +21,11 @@ There is **no cost, license key, or approval required** for these use cases.
 
 ## 🚫 Commercial Restrictions
 
-M7-JS-LIB-098 **may not be used** in the following ways without a paid commercial license:
+M7-JS-LIB-TREE **may not be used** in the following ways without a paid commercial license:
 
 * As part of a **commercial product** that is sold, licensed, or monetized
 * Embedded within a platform, device, or SaaS product offered to customers
-* Internally at companies with **more than 10 users** working with M7-JS-LIB-098
+* Internally at companies with **more than 10 users** working with M7-JS-LIB-TREE
 * As a hosted service, API, or backend component for commercial delivery
 * In resale, sublicensing, or redistribution as part of paid offerings
 
@@ -33,7 +33,7 @@ M7-JS-LIB-098 **may not be used** in the following ways without a paid commercia
 
 ## 🔒 Definitions
 
-* **User**: Anyone who installs, configures, modifies, integrates, or interacts with M7-JS-LIB-098 as part of their role.
+* **User**: Anyone who installs, configures, modifies, integrates, or interacts with M7-JS-LIB-TREE as part of their role.
 * **Commercial use**: Use in a context intended for revenue generation or business advantage (e.g. SaaS, enterprise ops, service platforms).
 
 ---
