@@ -63,12 +63,14 @@ class TreeInspector {
 	maxDepth = Infinity,
 	depth = 0,
     } = {}) {
-	console.log(`parsing with '${name}`);
+
 	if (depth === 0) {
 	    // explicit flush
 	    this.tree = null;
 	    this.index.byPath.clear();
 	    this.index.byRef = new WeakMap();
+	    console.log(`parsing with '${name}'`);
+
 	}
 	const t = typeof value;
 
