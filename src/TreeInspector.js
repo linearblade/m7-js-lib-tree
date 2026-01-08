@@ -43,7 +43,8 @@ class TreeInspector {
 
 	// Parse immediately by default (can be turned off via options.autoParse === false)
 	if (this.options.autoParse !== false) {
-	    this.parse({name});
+	    const parseOpts = options.name?{name:options.name} : {};
+	    this.parse(parseOpts);
 	}
 
 	
