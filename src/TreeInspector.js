@@ -246,8 +246,10 @@ class TreeInspector {
      * @returns {object|null} payload describing the node + useful context
      */
     inspect(target, opts = {}) {
+
 	const {
-	    rootName = this.options?.name ?? "root",
+	    rootName = this.tree?.name ?? this.options?.name ?? "root",
+	    //rootName = this.options?.name ?? "root",
 	    //rootName = "root",
 	    reparseIfMissing = true,
 	    childrenPreview = 25,     // how many child names to preview
@@ -296,14 +298,27 @@ class TreeInspector {
 
 	return payload;
     }
+    _normalizePath(p, rootName) {
+  const s = String(p).trim().replace(/^\.+|\.+$/g, "");
+  if (!s) return rootName;
 
+  // ✅ if they passed the root itself ("lib"), don't prefix it
+  if (s === rootName) return rootName;
+
+  // ✅ if already rooted ("lib.utils.hash"), leave it alone
+  if (s.startsWith(rootName + ".")) return s;
+
+  // otherwise treat it as relative ("utils.hash" -> "lib.utils.hash")
+  return `${rootName}.${s}`;
+    }
+    /*
     _normalizePath(p, rootName) {
 	// allow "root.utils.hash" or "utils.hash"
 	const s = String(p).trim().replace(/^\.+|\.+$/g, "");
 	if (!s) return rootName;
 	return s.startsWith(rootName + ".") ? s : `${rootName}.${s}`;
     }
-
+*/
     _findByPath(fullPath) {
 	// If you later build this.index.byPath, this becomes O(1). For now: DFS.
 	const parts = fullPath.split(".").filter(Boolean);
