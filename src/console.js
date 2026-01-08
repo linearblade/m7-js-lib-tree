@@ -5,7 +5,7 @@ function install(cls) {
 }
 
 
-function Console(lib, {
+function console(lib, {
     mount = document.body,
     title = "m7 Tree Console",
     rootName = "root",
