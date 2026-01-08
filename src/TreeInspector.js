@@ -251,5 +251,116 @@ class TreeInspector {
 	}
     }
 
+
+    // --------- INSPECT ----------
+  /**
+   * Inspect a target in the parse tree.
+   * @param {string|any} target - dot path ("utils.hash.merge") OR the actual ref (function/object/etc)
+   * @param {object} [opts]
+   * @returns {object|null} payload describing the node + useful context
+   */
+  inspect(target, opts = {}) {
+    const {
+      rootName = "root",
+      reparseIfMissing = true,
+      childrenPreview = 25,     // how many child names to preview
+      includeChildren = false,  // include full children array (can be big)
+      includeRef = true,        // include the raw ref in payload
+      show = false,             // if true, console.log a friendly summary
+    } = opts;
+
+    if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
+    if (!this.tree) return null;
+
+    let hit = null;
+
+    if (typeof target === "string") {
+      const path = this._normalizePath(target, rootName);
+      hit = this._findByPath(path);
+    } else {
+      hit = this._findByRef(target);
+    }
+
+    if (!hit) return null;
+
+    const { node, path, parent } = hit;
+
+    const payload = {
+      type: node.type,
+      name: node.name,
+      path,
+      signature: node.signature ?? null,
+      parentPath: parent ? parent.path : null,
+      childCount: Array.isArray(node.children) ? node.children.length : 0,
+      childrenPreview: Array.isArray(node.children)
+        ? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
+        : [],
+    };
+
+    if (includeChildren) payload.children = node.children || [];
+    if (includeRef) payload.ref = node.ref;
+
+    if (show) {
+      const icon = TreeInspector.ICONS[node.type] ?? TreeInspector.ICONS.scalar;
+      console.log(`${icon} ${path}`);
+      if (payload.signature) console.log(payload.signature);
+      if (payload.childCount) console.log(`children: ${payload.childCount}`);
+    }
+
+    return payload;
+  }
+
+  _normalizePath(p, rootName) {
+    // allow "root.utils.hash" or "utils.hash"
+    const s = String(p).trim().replace(/^\.+|\.+$/g, "");
+    if (!s) return rootName;
+    return s.startsWith(rootName + ".") ? s : `${rootName}.${s}`;
+  }
+
+  _findByPath(fullPath) {
+    // If you later build this.index.byPath, this becomes O(1). For now: DFS.
+    const parts = fullPath.split(".").filter(Boolean);
+    if (!parts.length) return null;
+    if (parts[0] !== this.tree.name) return null;
+
+    let node = this.tree;
+    let parent = null;
+    let path = node.name;
+
+    for (let i = 1; i < parts.length; i++) {
+      const key = parts[i];
+      if (!node.children) return null;
+      const next = node.children.find(c => c.name === key);
+      if (!next) return null;
+      parent = { node, path };
+      node = next;
+      path += "." + key;
+    }
+
+    return { node, path, parent };
+  }
+
+  _findByRef(ref) {
+    // If you later populate this.index.byRef, this becomes near O(1). For now: DFS.
+    const stack = [{ node: this.tree, path: this.tree.name, parent: null }];
+    while (stack.length) {
+      const cur = stack.pop();
+      if (cur.node && cur.node.ref === ref) return cur;
+
+      const kids = cur.node?.children || [];
+      for (let i = kids.length - 1; i >= 0; i--) {
+        const child = kids[i];
+        stack.push({
+          node: child,
+          path: `${cur.path}.${child.name}`,
+          parent: cur,
+        });
+      }
+    }
+    return null;
+  }
+
+  // --------- stubs ----------
+  find(partial, opts = {}) { return []; }
     
 }
