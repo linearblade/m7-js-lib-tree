@@ -5,19 +5,49 @@ function install(cls) {
 }
 
 
-function console(lib, {
+function console(lib,
+		 {
+		     mount = document.body,
+		     title = "m7 Tree Console",
+		     rootName = null,       // if null, we infer it
+		     maxDepth = 25,
+		     rootVar = window,      // optional: where to scan globals from (default window)
+		     name = null,           // optional override
+		 } = {}
+		) {
+    if (!lib) throw new Error("[tree.console] lib is required");
+    if (!TreeInspector) throw new Error("[console] TreeInspector not installed");
+    
+    // choose a root label:
+    // 1) explicit name option
+    // 2) infer from rootVar (typically window) matching `lib`
+    // 3) fallback "root"
+    const inferred =
+	  name ??
+	  inferRootName(lib, { globals: true, fallback: "root" });
+
+    const rootLabel = rootName ?? inferred;
+
+    const inspector = new TreeInspector(lib, { autoParse: false });
+    inspector.parse({ name: rootLabel, maxDepth });
+    
+/*
+		 {
     mount = document.body,
     title = "m7 Tree Console",
     rootName = "root",
     maxDepth = 25,
+    rootVar  = window
 } = {}) {
+    const name = opts.name ?? inferRootName(rootVar);
+
     if (!lib) throw new Error("[tree.console] lib is required");
     if (!TreeInspector) 
 	throw new Error("[console] TreeInspector not installed");
     
     const inspector = new TreeInspector(lib, { autoParse: false });
     inspector.parse({ name: rootName, maxDepth });
-
+*/
     // ---------- DOM ----------
     const el = document.createElement("div");
     enableToggle(el);
@@ -63,23 +93,23 @@ function console(lib, {
   </div>
 `;
     /*
-    el.innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.12);">
+      el.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.12);">
       <div style="font-weight:700;">${escapeHtml(title)}</div>
       <input data-q placeholder="find… (name or path)" style="
-        flex:1; background: rgba(255,255,255,0.08); color:#fff;
-        border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
-        padding: 6px 8px; outline: none;
+      flex:1; background: rgba(255,255,255,0.08); color:#fff;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+      padding: 6px 8px; outline: none;
       "/>
       <button data-reparse style="${btnCss()}">reparse</button>
       <button data-close style="${btnCss()}">×</button>
-    </div>
+      </div>
 
-    <div style="display:grid; grid-template-columns: 1.1fr 1fr; height: calc(100% - 46px);">
+      <div style="display:grid; grid-template-columns: 1.1fr 1fr; height: calc(100% - 46px);">
       <div data-tree style="overflow:auto; padding:10px 12px; border-right:1px solid rgba(255,255,255,0.12);"></div>
       <div data-detail style="overflow:auto; padding:10px 12px;"></div>
-    </div>
-  `;*/
+      </div>
+      `;*/
 
     const treeEl = el.querySelector("[data-tree]");
     const detailEl = el.querySelector("[data-detail]");
@@ -378,65 +408,109 @@ function console(lib, {
     }
 
 
-function renderFullTree() {
-  treeEl.innerHTML = "";
+    function renderFullTree() {
+	treeEl.innerHTML = "";
 
-  const root = inspector.tree;
-  if (!root) {
-    treeEl.textContent = "No tree. (parse failed?)";
-    return;
-  }
+	const root = inspector.tree;
+	if (!root) {
+	    treeEl.textContent = "No tree. (parse failed?)";
+	    return;
+	}
 
-  const head = document.createElement("div");
-  head.style.cssText = "margin-bottom:8px; opacity:0.9;";
-  head.textContent = "tree view";
-  treeEl.appendChild(head);
+	const head = document.createElement("div");
+	head.style.cssText = "margin-bottom:8px; opacity:0.9;";
+	head.textContent = "tree view";
+	treeEl.appendChild(head);
 
-  const ul = document.createElement("ul");
-  ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
-  treeEl.appendChild(ul);
+	const ul = document.createElement("ul");
+	ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
+	treeEl.appendChild(ul);
 
-  // render entire parse tree (collapsed-as-text list)
-  const stack = [{ node: root, path: root.name, depth: 0 }];
+	// render entire parse tree (collapsed-as-text list)
+	const stack = [{ node: root, path: root.name, depth: 0 }];
 
-  // simple cap so a monstrous tree doesn't lock the browser
-  const maxNodes = 2500;
-  let count = 0;
+	// simple cap so a monstrous tree doesn't lock the browser
+	const maxNodes = 2500;
+	let count = 0;
 
-  while (stack.length && count < maxNodes) {
-    const { node, path, depth } = stack.pop();
+	while (stack.length && count < maxNodes) {
+	    const { node, path, depth } = stack.pop();
 
-    const li = renderNodeLine(
-      `${"  ".repeat(depth)}${path}`, // show indentation + full path label
-      node.type,
-      path,
-      true
-    );
+	    const li = renderNodeLine(
+		`${"  ".repeat(depth)}${path}`, // show indentation + full path label
+		node.type,
+		path,
+		true
+	    );
 
-    // make indentation look nicer
-    li.style.paddingLeft = `${6 + depth * 10}px`;
-    ul.appendChild(li);
-    count++;
+	    // make indentation look nicer
+	    li.style.paddingLeft = `${6 + depth * 10}px`;
+	    ul.appendChild(li);
+	    count++;
 
-    const kids = node.children || [];
-    for (let i = kids.length - 1; i >= 0; i--) {
-      const child = kids[i];
-      stack.push({ node: child, path: `${path}.${child.name}`, depth: depth + 1 });
+	    const kids = node.children || [];
+	    for (let i = kids.length - 1; i >= 0; i--) {
+		const child = kids[i];
+		stack.push({ node: child, path: `${path}.${child.name}`, depth: depth + 1 });
+	    }
+	}
+
+	if (count >= maxNodes) {
+	    const warn = document.createElement("div");
+	    warn.style.cssText = "margin-top:8px; opacity:0.7;";
+	    warn.textContent = `…stopped at ${maxNodes} nodes (cap). Use find to narrow down.`;
+	    treeEl.appendChild(warn);
+	}
+
+	// keep current selection on the right if any, otherwise show root
+	showPath(root.name);
     }
-  }
 
-  if (count >= maxNodes) {
-    const warn = document.createElement("div");
-    warn.style.cssText = "margin-top:8px; opacity:0.7;";
-    warn.textContent = `…stopped at ${maxNodes} nodes (cap). Use find to narrow down.`;
-    treeEl.appendChild(warn);
-  }
 
-  // keep current selection on the right if any, otherwise show root
-  showPath(root.name);
-}
+
+
+    function inferRootName(value, {
+	prefer = ["__name", "__id", "name"],
+	globals = true,
+	fallback = "root",
+    } = {}) {
+	if (!value) return fallback;
+
+	// 1) Explicit metadata on the object itself
+	for (const key of prefer) {
+	    try {
+		if (typeof value[key] === "string" && value[key]) {
+		    return value[key];
+		}
+	    } catch {}
+	}
+
+	// 2) Best-effort: scan window globals (only if allowed)
+	if (globals && typeof window === "object") {
+	    try {
+		for (const k of Object.keys(window)) {
+		    if (window[k] === value) return k;
+		}
+	    } catch {}
+	}
+
+	// 3) Constructor / function name (least reliable, but helpful)
+	try {
+	    if (typeof value === "function" && value.name) return value.name;
+	    if (value?.constructor?.name && value.constructor.name !== "Object") {
+		return value.constructor.name;
+	    }
+	} catch {}
+
+	return fallback;
+    }
+
+
     
- renderFullTree();   
+    renderFullTree();   
+
+
+
     
     return { inspector, el };
 }
