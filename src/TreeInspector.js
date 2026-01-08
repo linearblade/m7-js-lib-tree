@@ -6,7 +6,7 @@ await shell.bootstrap.load({resource:"https://static.m7.org/vendor/m7BootStrap/e
   package: { hooks: true }
 })
  */
-import {installInlineTreeConsole} from './console.js';
+import treeConsole from './console.js';
 class TreeInspector {
 
     static ICONS = {
@@ -468,6 +468,6 @@ function factory(...args){
     return new TreeInspector(...args);
 }
 
-
-export { TreeInspector as cls, factory as inspector ,installInlineTreeConsole as console};
-export default { cls: TreeInspector, inspector: factory , console:installInlineTreeConsole};
+treeConsole.install(TreeInspector);
+export { TreeInspector as cls, factory as inspector ,treeConsole.console as console};
+export default { cls: TreeInspector, inspector: factory , console:treeConsole.console};

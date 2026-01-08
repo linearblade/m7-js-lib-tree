@@ -1,12 +1,20 @@
+let TreeInspector = null;
 
-function installInlineTreeConsole(lib, {
+function install(cls) {
+  TreeInspector = cls;
+}
+
+
+function Console(lib, {
     mount = document.body,
     title = "m7 Tree Console",
     rootName = "root",
     maxDepth = 25,
 } = {}) {
     if (!lib) throw new Error("[tree.console] lib is required");
-
+    if (!TreeInspector) 
+	throw new Error("[console] TreeInspector not installed");
+  
     const inspector = new TreeInspector(lib, { autoParse: false });
     inspector.parse({ name: rootName, maxDepth });
 
@@ -235,5 +243,5 @@ function installInlineTreeConsole(lib, {
 }
 
 
-export {installInlineTreeConsole};
-export default installInlineTreeConsole;
+export {install,console};
+export default {install,console};
