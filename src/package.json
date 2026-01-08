@@ -1,9 +1,9 @@
 {
-    "id": "lib:v098",
-    "title": "m7 legacy lib v098",
+    "id": "lib:TreeInspector",
+    "title": "m7 Tree Inspector",
     "assets": [    ],
     "modules": [
-        { "id": "lib", "type": "js", "url": "lib098.js" },
+        { "id": "lib", "type": "js", "url": "TreeInspector.js" },
         { "id": "manager", "type": "js", "url": "manager.js" }
     ],
     "hooks" : {

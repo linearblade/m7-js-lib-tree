@@ -253,204 +253,208 @@ class TreeInspector {
 
 
     // --------- INSPECT ----------
-  /**
-   * Inspect a target in the parse tree.
-   * @param {string|any} target - dot path ("utils.hash.merge") OR the actual ref (function/object/etc)
-   * @param {object} [opts]
-   * @returns {object|null} payload describing the node + useful context
-   */
-  inspect(target, opts = {}) {
-    const {
-      rootName = "root",
-      reparseIfMissing = true,
-      childrenPreview = 25,     // how many child names to preview
-      includeChildren = false,  // include full children array (can be big)
-      includeRef = true,        // include the raw ref in payload
-      show = false,             // if true, console.log a friendly summary
-    } = opts;
+    /**
+     * Inspect a target in the parse tree.
+     * @param {string|any} target - dot path ("utils.hash.merge") OR the actual ref (function/object/etc)
+     * @param {object} [opts]
+     * @returns {object|null} payload describing the node + useful context
+     */
+    inspect(target, opts = {}) {
+	const {
+	    rootName = "root",
+	    reparseIfMissing = true,
+	    childrenPreview = 25,     // how many child names to preview
+	    includeChildren = false,  // include full children array (can be big)
+	    includeRef = true,        // include the raw ref in payload
+	    show = false,             // if true, console.log a friendly summary
+	} = opts;
 
-    if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
-    if (!this.tree) return null;
+	if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
+	if (!this.tree) return null;
 
-    let hit = null;
+	let hit = null;
 
-    if (typeof target === "string") {
-      const path = this._normalizePath(target, rootName);
-      hit = this._findByPath(path);
-    } else {
-      hit = this._findByRef(target);
+	if (typeof target === "string") {
+	    const path = this._normalizePath(target, rootName);
+	    hit = this._findByPath(path);
+	} else {
+	    hit = this._findByRef(target);
+	}
+
+	if (!hit) return null;
+
+	const { node, path, parent } = hit;
+
+	const payload = {
+	    type: node.type,
+	    name: node.name,
+	    path,
+	    signature: node.signature ?? null,
+	    parentPath: parent ? parent.path : null,
+	    childCount: Array.isArray(node.children) ? node.children.length : 0,
+	    childrenPreview: Array.isArray(node.children)
+		? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
+		: [],
+	};
+
+	if (includeChildren) payload.children = node.children || [];
+	if (includeRef) payload.ref = node.ref;
+
+	if (show) {
+	    const icon = TreeInspector.ICONS[node.type] ?? TreeInspector.ICONS.scalar;
+	    console.log(`${icon} ${path}`);
+	    if (payload.signature) console.log(payload.signature);
+	    if (payload.childCount) console.log(`children: ${payload.childCount}`);
+	}
+
+	return payload;
     }
 
-    if (!hit) return null;
-
-    const { node, path, parent } = hit;
-
-    const payload = {
-      type: node.type,
-      name: node.name,
-      path,
-      signature: node.signature ?? null,
-      parentPath: parent ? parent.path : null,
-      childCount: Array.isArray(node.children) ? node.children.length : 0,
-      childrenPreview: Array.isArray(node.children)
-        ? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
-        : [],
-    };
-
-    if (includeChildren) payload.children = node.children || [];
-    if (includeRef) payload.ref = node.ref;
-
-    if (show) {
-      const icon = TreeInspector.ICONS[node.type] ?? TreeInspector.ICONS.scalar;
-      console.log(`${icon} ${path}`);
-      if (payload.signature) console.log(payload.signature);
-      if (payload.childCount) console.log(`children: ${payload.childCount}`);
+    _normalizePath(p, rootName) {
+	// allow "root.utils.hash" or "utils.hash"
+	const s = String(p).trim().replace(/^\.+|\.+$/g, "");
+	if (!s) return rootName;
+	return s.startsWith(rootName + ".") ? s : `${rootName}.${s}`;
     }
 
-    return payload;
-  }
+    _findByPath(fullPath) {
+	// If you later build this.index.byPath, this becomes O(1). For now: DFS.
+	const parts = fullPath.split(".").filter(Boolean);
+	if (!parts.length) return null;
+	if (parts[0] !== this.tree.name) return null;
 
-  _normalizePath(p, rootName) {
-    // allow "root.utils.hash" or "utils.hash"
-    const s = String(p).trim().replace(/^\.+|\.+$/g, "");
-    if (!s) return rootName;
-    return s.startsWith(rootName + ".") ? s : `${rootName}.${s}`;
-  }
+	let node = this.tree;
+	let parent = null;
+	let path = node.name;
 
-  _findByPath(fullPath) {
-    // If you later build this.index.byPath, this becomes O(1). For now: DFS.
-    const parts = fullPath.split(".").filter(Boolean);
-    if (!parts.length) return null;
-    if (parts[0] !== this.tree.name) return null;
+	for (let i = 1; i < parts.length; i++) {
+	    const key = parts[i];
+	    if (!node.children) return null;
+	    const next = node.children.find(c => c.name === key);
+	    if (!next) return null;
+	    parent = { node, path };
+	    node = next;
+	    path += "." + key;
+	}
 
-    let node = this.tree;
-    let parent = null;
-    let path = node.name;
-
-    for (let i = 1; i < parts.length; i++) {
-      const key = parts[i];
-      if (!node.children) return null;
-      const next = node.children.find(c => c.name === key);
-      if (!next) return null;
-      parent = { node, path };
-      node = next;
-      path += "." + key;
+	return { node, path, parent };
     }
 
-    return { node, path, parent };
-  }
+    _findByRef(ref) {
+	// If you later populate this.index.byRef, this becomes near O(1). For now: DFS.
+	const stack = [{ node: this.tree, path: this.tree.name, parent: null }];
+	while (stack.length) {
+	    const cur = stack.pop();
+	    if (cur.node && cur.node.ref === ref) return cur;
 
-  _findByRef(ref) {
-    // If you later populate this.index.byRef, this becomes near O(1). For now: DFS.
-    const stack = [{ node: this.tree, path: this.tree.name, parent: null }];
-    while (stack.length) {
-      const cur = stack.pop();
-      if (cur.node && cur.node.ref === ref) return cur;
-
-      const kids = cur.node?.children || [];
-      for (let i = kids.length - 1; i >= 0; i--) {
-        const child = kids[i];
-        stack.push({
-          node: child,
-          path: `${cur.path}.${child.name}`,
-          parent: cur,
-        });
-      }
+	    const kids = cur.node?.children || [];
+	    for (let i = kids.length - 1; i >= 0; i--) {
+		const child = kids[i];
+		stack.push({
+		    node: child,
+		    path: `${cur.path}.${child.name}`,
+		    parent: cur,
+		});
+	    }
+	}
+	return null;
     }
-    return null;
-  }
 
     // --------- stubs ----------
 
     find(partial, opts = {}) {
-  const {
-    limit = 50,
-    types = null,          // e.g. ["function","class","hash"]
-    pathsOnly = false,     // return array of paths (strings)
-    includeNode = true,    // include node object
-    includeRef = false,    // include node.ref
-    includeSignature = true,
-    match = "name",        // "name" | "path" | "both"
-    rootName = "root",
-    reparseIfMissing = true,
-  } = opts;
+	const {
+	    limit = 50,
+	    types = null,          // e.g. ["function","class","hash"]
+	    pathsOnly = false,     // return array of paths (strings)
+	    includeNode = true,    // include node object
+	    includeRef = false,    // include node.ref
+	    includeSignature = true,
+	    match = "name",        // "name" | "path" | "both"
+	    rootName = "root",
+	    reparseIfMissing = true,
+	} = opts;
 
-  if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
-  if (!this.tree) return [];
+	if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
+	if (!this.tree) return [];
 
-  const typeSet = types ? new Set(types) : null;
+	const typeSet = types ? new Set(types) : null;
 
-  // Build a matcher
-  let predicate;
-  if (typeof partial === "function") {
-    predicate = partial;
-  } else if (partial instanceof RegExp) {
-    predicate = (node, path) => {
-      const hay =
-        match === "path" ? path :
-        match === "both" ? `${path} ${node.name}` :
-        node.name;
-      return partial.test(hay);
-    };
-  } else {
-    const needle = String(partial ?? "").toLowerCase();
-    predicate = (node, path) => {
-      const hay =
-        match === "path" ? path :
-        match === "both" ? `${path} ${node.name}` :
-        node.name;
-      return String(hay).toLowerCase().includes(needle);
-    };
-  }
+	// Build a matcher
+	let predicate;
+	if (typeof partial === "function") {
+	    predicate = partial;
+	} else if (partial instanceof RegExp) {
+	    predicate = (node, path) => {
+		const hay =
+		      match === "path" ? path :
+		      match === "both" ? `${path} ${node.name}` :
+		      node.name;
+		return partial.test(hay);
+	    };
+	} else {
+	    const needle = String(partial ?? "").toLowerCase();
+	    predicate = (node, path) => {
+		const hay =
+		      match === "path" ? path :
+		      match === "both" ? `${path} ${node.name}` :
+		      node.name;
+		return String(hay).toLowerCase().includes(needle);
+	    };
+	}
 
-  const results = [];
-  const stack = [{ node: this.tree, path: this.tree.name, parentPath: null }];
+	const results = [];
+	const stack = [{ node: this.tree, path: this.tree.name, parentPath: null }];
 
-  while (stack.length && results.length < limit) {
-    const { node, path, parentPath } = stack.pop();
-    if (!node) continue;
+	while (stack.length && results.length < limit) {
+	    const { node, path, parentPath } = stack.pop();
+	    if (!node) continue;
 
-    if (!typeSet || typeSet.has(node.type)) {
-      let ok = false;
-      try {
-        ok = !!predicate(node, path);
-      } catch {
-        ok = false;
-      }
+	    if (!typeSet || typeSet.has(node.type)) {
+		let ok = false;
+		try {
+		    ok = !!predicate(node, path);
+		} catch {
+		    ok = false;
+		}
 
-      if (ok) {
-        if (pathsOnly) {
-          results.push(path);
-        } else {
-          const hit = {
-            type: node.type,
-            name: node.name,
-            path,
-            parentPath,
-            childCount: Array.isArray(node.children) ? node.children.length : 0,
-          };
+		if (ok) {
+		    if (pathsOnly) {
+			results.push(path);
+		    } else {
+			const hit = {
+			    type: node.type,
+			    name: node.name,
+			    path,
+			    parentPath,
+			    childCount: Array.isArray(node.children) ? node.children.length : 0,
+			};
 
-          if (includeNode) hit.node = node;
-          if (includeRef) hit.ref = node.ref;
-          if (includeSignature && node.signature) hit.signature = node.signature;
+			if (includeNode) hit.node = node;
+			if (includeRef) hit.ref = node.ref;
+			if (includeSignature && node.signature) hit.signature = node.signature;
 
-          results.push(hit);
-        }
-      }
-    }
+			results.push(hit);
+		    }
+		}
+	    }
 
-    // DFS: push children
-    const kids = node.children || [];
-    for (let i = kids.length - 1; i >= 0; i--) {
-      const child = kids[i];
-      stack.push({
-        node: child,
-        path: `${path}.${child.name}`,
-        parentPath: path,
-      });
-    }
-  }
+	    // DFS: push children
+	    const kids = node.children || [];
+	    for (let i = kids.length - 1; i >= 0; i--) {
+		const child = kids[i];
+		stack.push({
+		    node: child,
+		    path: `${path}.${child.name}`,
+		    parentPath: path,
+		});
+	    }
+	}
 
-  return results;
-}   
+	return results;
+    }   
 }
+
+
+export TreeInspector;
+export default TreeInspector;
