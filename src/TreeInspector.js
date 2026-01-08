@@ -26,7 +26,7 @@ class TreeInspector {
      * @param {object} [options]
      */
     
-    constructor(obj, options = {name='root'}) {
+    constructor(obj, options = {name:'root'}) {
 	this.rootRef = obj;
 	this.options = options;
 
