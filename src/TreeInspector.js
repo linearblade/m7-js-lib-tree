@@ -26,10 +26,9 @@ class TreeInspector {
      * @param {object} [options]
      */
     
-    constructor(obj, options = {name:'root'}) {
+    constructor(obj, options = {}) {
 	this.rootRef = obj;
-	this.options = options;
-
+	this.options = { name: "root", ...options };
 	// internal line buffer for dumps
 	this._out = "";
 	// Will hold the enriched parse tree (your {type,name,children,ref,...} nodes)
@@ -43,8 +42,8 @@ class TreeInspector {
 
 	// Parse immediately by default (can be turned off via options.autoParse === false)
 	if (this.options.autoParse !== false) {
-	    const parseOpts = options.name?{name:options.name} : {};
-	    this.parse(parseOpts);
+	    //const parseOpts = options.name?{name:options.name} : {};
+	    this.parse();
 	}
 
 	
@@ -59,7 +58,7 @@ class TreeInspector {
     // ---- parse (refactored from buildParseTree) ----
     parse({
 	value = this.rootRef,
-	name = "root",
+	name = this.options?.name ?? "root",
 	seen = new WeakMap(),
 	maxDepth = Infinity,
 	depth = 0,
@@ -67,6 +66,7 @@ class TreeInspector {
 
 	if (depth === 0) {
 	    // explicit flush
+	    this.options.name = name; // persist
 	    this.tree = null;
 	    this.index.byPath.clear();
 	    this.index.byRef = new WeakMap();
@@ -470,7 +470,7 @@ class TreeInspector {
 function factory(...args){
     return new TreeInspector(...args);
 }
-const console = treeConsole.console;
+const myconsole = treeConsole.console;
 treeConsole.install(TreeInspector);
-export { TreeInspector as cls, factory as inspector , console};
-export default { cls: TreeInspector, inspector: factory , console};
+export { TreeInspector as cls, factory as inspector , console:myconsole};
+export default { cls: TreeInspector, inspector: factory , console:myconsole};
