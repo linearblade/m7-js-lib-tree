@@ -135,35 +135,8 @@ class TreeInspector {
 
 
     
-    /**
-     * Inspect a target within the tree.
-     * @param {string|any} target
-     *   - string: dot-notation path like "utils.hash.merge"
-     *   - ref: actual object/function reference contained in the tree
-     * @param {object} [opts]
-     * @returns {any} - likely a node (or nodes) plus useful metadata
-     */
-    inspect(target, opts = {}) {
-	// TODO: if string, resolve via byPath index (support leading "root." optional)
-	// TODO: if ref (object/function), resolve via byRef WeakMap
-	// TODO: return a rich inspection payload (node, children preview, signature, etc.)
-	return null;
-    }
 
-    /**
-     * Find nodes by partial match.
-     * @param {string|RegExp|function} partial
-     *   - string: substring match against node.name and/or path
-     *   - RegExp: regex match
-     *   - function: predicate(node) => boolean
-     * @param {object} [opts]
-     * @returns {Array<any>} - list of matching nodes (or result objects)
-     */
-    find(partial, opts = {}) {
-	// TODO: traverse this.tree and collect matches
-	// TODO: support opts like { limit, types, pathsOnly }
-	return [];
-    }
+
 
     /**
      * Dump a printable representation (tree text) for validation / console output.
@@ -273,7 +246,8 @@ class TreeInspector {
      */
     inspect(target, opts = {}) {
 	const {
-	    rootName = "root",
+	    rootName = this.options?.name ?? "root",
+	    //rootName = "root",
 	    reparseIfMissing = true,
 	    childrenPreview = 25,     // how many child names to preview
 	    includeChildren = false,  // include full children array (can be big)
@@ -372,7 +346,15 @@ class TreeInspector {
 	return null;
     }
 
-    // --------- stubs ----------
+    /**
+     * Find nodes by partial match.
+     * @param {string|RegExp|function} partial
+     *   - string: substring match against node.name and/or path
+     *   - RegExp: regex match
+     *   - function: predicate(node) => boolean
+     * @param {object} [opts]
+     * @returns {Array<any>} - list of matching nodes (or result objects)
+     */
 
     find(partial, opts = {}) {
 	const {
@@ -383,7 +365,8 @@ class TreeInspector {
 	    includeRef = false,    // include node.ref
 	    includeSignature = true,
 	    match = "name",        // "name" | "path" | "both"
-	    rootName = "root",
+	    //rootName = "root",
+	    rootName = this.options?.name ?? "root",
 	    reparseIfMissing = true,
 	} = opts;
 
