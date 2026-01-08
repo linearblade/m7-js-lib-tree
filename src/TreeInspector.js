@@ -11,6 +11,7 @@ class TreeInspector {
 
     static ICONS = {
 	object: "📁",     // hash / plain object
+	hash: "📁",     // hash / plain object
 	array: "🔗",      // array
 	function: "ƒ",    // function
 	class: "🏛️",      // class
