@@ -1,4 +1,12 @@
-import {inlineTreeConsole} from './console.js';
+/*
+  create proper console later.
+await shell.bootstrap.load({resource:"https://static.m7.org/vendor/m7BootStrap/examples/console/package.json"},{
+  load: ["#runners.mount", (sys, ctx) => console.log("Loaded:", ctx.results)],
+  error: [(sys, ctx) => console.error("Failed:", ctx.failed)],
+  package: { hooks: true }
+})
+ */
+import {installInlineTreeConsole} from './console.js';
 class TreeInspector {
 
     static ICONS = {
@@ -461,5 +469,5 @@ function factory(...args){
 }
 
 
-export { TreeInspector as cls, factory as inspector ,inlineTreeConsole as console};
-export default { cls: TreeInspector, inspector: factory , console:inlineTreeConsole};
+export { TreeInspector as cls, factory as inspector ,installInlineTreeConsole as console};
+export default { cls: TreeInspector, inspector: factory , console:installInlineTreeConsole};
