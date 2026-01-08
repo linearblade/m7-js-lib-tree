@@ -255,7 +255,7 @@ class TreeInspector {
 	    includeRef = true,        // include the raw ref in payload
 	    show = false,             // if true, console.log a friendly summary
 	} = opts;
-
+	console.log(`inspecting ${String(target)}`);
 	if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
 	if (!this.tree) return null;
 
