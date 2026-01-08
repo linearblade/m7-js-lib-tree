@@ -224,7 +224,7 @@ class TreeInspector {
 	this._dumpNode(node, { indent: "", isLast: true, icons });
 	const out = this._flushOut();
 	if (toConsole) console.log("%s", out);
-	return out;
+	else return out;
     }
 
     _dumpNode(node, { indent, isLast, icons }) {
