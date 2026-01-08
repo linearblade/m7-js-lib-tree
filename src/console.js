@@ -28,7 +28,7 @@ function console(lib,
 
     const rootLabel = rootName ?? inferred;
 
-    const inspector = new TreeInspector(lib, { autoParse: false });
+    const inspector = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
     
 /*

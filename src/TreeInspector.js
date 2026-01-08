@@ -26,7 +26,7 @@ class TreeInspector {
      * @param {object} [options]
      */
     
-    constructor(obj, options = {}) {
+    constructor(obj, options = {name=root}) {
 	this.rootRef = obj;
 	this.options = options;
 
@@ -43,7 +43,7 @@ class TreeInspector {
 
 	// Parse immediately by default (can be turned off via options.autoParse === false)
 	if (this.options.autoParse !== false) {
-	    this.parse();
+	    this.parse({name});
 	}
 
 	
