@@ -30,6 +30,7 @@ function console(lib,
 
     const inspector = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
+    const expanded = new Set(); // paths that are expanded
     
 /*
 		 {
@@ -117,6 +118,7 @@ function console(lib,
     
     const treeBtn = el.querySelector("[data-treeview]");
     treeBtn.onclick = () => renderFullTree();
+    treeBtn.onclick = () => renderCollapsibleTree();
     
     el.querySelector("[data-close]").onclick = () => {
 	disableToggle(el);
@@ -408,6 +410,182 @@ function console(lib,
     }
 
 
+    function renderCollapsibleTree({
+  root = inspector.tree,
+  maxNodes = 2500,         // render cap per draw
+  expandRoot = true,
+} = {}) {
+  treeEl.innerHTML = "";
+
+  if (!root) {
+    treeEl.textContent = "No tree. (parse failed?)";
+    return;
+  }
+
+  if (expandRoot) expanded.add(root.name);
+
+  const head = document.createElement("div");
+  head.style.cssText = "margin-bottom:8px; opacity:0.9; display:flex; gap:8px; align-items:center;";
+  head.innerHTML = `
+    <span style="opacity:0.9;">tree</span>
+    <button data-expandall style="${chipCss()}">expand all</button>
+    <button data-collapseall style="${chipCss()}">collapse all</button>
+  `;
+  treeEl.appendChild(head);
+
+  const ul = document.createElement("ul");
+  ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
+  treeEl.appendChild(ul);
+
+  // DFS stack; we push children in reverse to preserve order
+  const stack = [{ node: root, path: root.name, depth: 0, isLast: true }];
+  let count = 0;
+
+  while (stack.length && count < maxNodes) {
+    const { node, path, depth } = stack.pop();
+    count++;
+
+    const isBranch = node && (node.type === "hash" || node.type === "array");
+    const isOpen = isBranch && expanded.has(path);
+    const kids = (node && node.children) ? node.children : [];
+
+    ul.appendChild(renderTreeRow({ node, path, depth, isBranch, isOpen }));
+
+    if (isBranch && isOpen && kids.length) {
+      for (let i = kids.length - 1; i >= 0; i--) {
+        const child = kids[i];
+        stack.push({
+          node: child,
+          path: `${path}.${child.name}`,
+          depth: depth + 1,
+        });
+      }
+    }
+  }
+
+  if (count >= maxNodes) {
+    const warn = document.createElement("div");
+    warn.style.cssText = "margin-top:8px; opacity:0.7;";
+    warn.textContent = `…stopped at ${maxNodes} rendered nodes. Expand less / use find.`;
+    treeEl.appendChild(warn);
+  }
+
+  // wire expand/collapse all
+  head.querySelector("[data-expandall]").onclick = () => {
+    // expand everything currently visible under root (bounded)
+    expandAllUnder(root, root.name, 5000);
+    renderCollapsibleTree({ root, maxNodes, expandRoot: false });
+  };
+  head.querySelector("[data-collapseall]").onclick = () => {
+    expanded.clear();
+    expanded.add(root.name);
+    renderCollapsibleTree({ root, maxNodes, expandRoot: false });
+  };
+
+  // show root details if nothing selected yet
+  showPath(root.name);
+}
+
+function renderTreeRow({ node, path, depth, isBranch, isOpen }) {
+  const li = document.createElement("li");
+  li.style.cssText = `
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    cursor: default;
+    user-select: none;
+  `;
+  li.onmouseenter = () => li.style.background = "rgba(255,255,255,0.08)";
+  li.onmouseleave = () => li.style.background = "transparent";
+  li.style.paddingLeft = `${6 + depth * 12}px`;
+
+  // twisty
+  const twisty = document.createElement("span");
+  twisty.style.cssText = `
+    width: 16px;
+    display:inline-flex;
+    justify-content:center;
+    opacity: ${isBranch ? 0.9 : 0.25};
+    cursor: ${isBranch ? "pointer" : "default"};
+  `;
+  twisty.textContent = isBranch ? (isOpen ? "▼" : "▶") : "•";
+
+  if (isBranch) {
+    twisty.onclick = (e) => {
+      e.stopPropagation();
+      if (expanded.has(path)) expanded.delete(path);
+      else expanded.add(path);
+      renderCollapsibleTree({ root: inspector.tree, maxNodes, expandRoot: false });
+    };
+  }
+
+  // icon
+  const icon = document.createElement("span");
+  icon.style.cssText = "opacity:0.95;";
+  icon.textContent = iconFor(node.type);
+
+  // label
+  const label = document.createElement("span");
+  label.style.cssText = "cursor:pointer;";
+  label.textContent = node.name;
+
+  // clicking the label inspects
+  label.onclick = (e) => {
+    e.stopPropagation();
+    showPath(path);
+  };
+
+  // optional: double click label toggles too
+  label.ondblclick = (e) => {
+    if (!isBranch) return;
+    e.stopPropagation();
+    if (expanded.has(path)) expanded.delete(path);
+    else expanded.add(path);
+    renderCollapsibleTree({ root: inspector.tree, maxNodes, expandRoot: false });
+  };
+
+  li.appendChild(twisty);
+  li.appendChild(icon);
+  li.appendChild(label);
+
+  // small child count hint
+  if (isBranch) {
+    const hint = document.createElement("span");
+    hint.style.cssText = "opacity:0.55; margin-left:6px;";
+    const n = Array.isArray(node.children) ? node.children.length : 0;
+    hint.textContent = n ? `(${n})` : "";
+    li.appendChild(hint);
+  }
+
+  return li;
+}
+
+// expands nodes under a given node (bounded to avoid infinite/huge blowups)
+function expandAllUnder(node, path, limit = 5000) {
+  const stack = [{ node, path }];
+  let count = 0;
+
+  while (stack.length && count < limit) {
+    const cur = stack.pop();
+    if (!cur?.node) continue;
+
+    const isBranch = cur.node.type === "hash" || cur.node.type === "array";
+    if (!isBranch) continue;
+
+    expanded.add(cur.path);
+    count++;
+
+    const kids = cur.node.children || [];
+    for (let i = kids.length - 1; i >= 0; i--) {
+      const child = kids[i];
+      stack.push({ node: child, path: `${cur.path}.${child.name}` });
+    }
+  }
+}
+    
+
     function renderFullTree() {
 	treeEl.innerHTML = "";
 
@@ -507,7 +685,9 @@ function console(lib,
 
 
     
-    renderFullTree();   
+    //renderFullTree();
+    renderCollapsibleTree();
+    
 
 
 
