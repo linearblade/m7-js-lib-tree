@@ -40,12 +40,12 @@ function console(lib, {
        style="display:flex; align-items:center; gap:10px; padding:10px 12px;
               border-bottom:1px solid rgba(255,255,255,0.12);">
     <div style="font-weight:700;">${escapeHtml(title)}</div>
-
-    <input data-q placeholder="find… (name or path)" style="
-      flex:1; background: rgba(255,255,255,0.08); color:#fff;
-      border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
-      padding: 6px 8px; outline: none;
-    "/>
+<button data-treeview title="tree view" style="${btnCss()}">🌳</button>
+<input data-q placeholder="find… (name or path)" style="
+  flex:1; min-width:200px; background: rgba(255,255,255,0.08); color:#fff;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+  padding: 6px 8px; outline: none;
+"/>
 
     <button data-reparse style="${btnCss()}">reparse</button>
     <button data-close style="${btnCss()}">×</button>
@@ -84,7 +84,10 @@ function console(lib, {
     const treeEl = el.querySelector("[data-tree]");
     const detailEl = el.querySelector("[data-detail]");
     const qEl = el.querySelector("[data-q]");
-
+    
+    const treeBtn = el.querySelector("[data-treeview]");
+    treeBtn.onclick = () => renderFullTree();
+    
     el.querySelector("[data-close]").onclick = () => {
 	disableToggle(el);
 	el.remove();
@@ -375,7 +378,65 @@ function console(lib, {
     }
 
 
+function renderFullTree() {
+  treeEl.innerHTML = "";
+
+  const root = inspector.tree;
+  if (!root) {
+    treeEl.textContent = "No tree. (parse failed?)";
+    return;
+  }
+
+  const head = document.createElement("div");
+  head.style.cssText = "margin-bottom:8px; opacity:0.9;";
+  head.textContent = "tree view";
+  treeEl.appendChild(head);
+
+  const ul = document.createElement("ul");
+  ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
+  treeEl.appendChild(ul);
+
+  // render entire parse tree (collapsed-as-text list)
+  const stack = [{ node: root, path: root.name, depth: 0 }];
+
+  // simple cap so a monstrous tree doesn't lock the browser
+  const maxNodes = 2500;
+  let count = 0;
+
+  while (stack.length && count < maxNodes) {
+    const { node, path, depth } = stack.pop();
+
+    const li = renderNodeLine(
+      `${"  ".repeat(depth)}${path}`, // show indentation + full path label
+      node.type,
+      path,
+      true
+    );
+
+    // make indentation look nicer
+    li.style.paddingLeft = `${6 + depth * 10}px`;
+    ul.appendChild(li);
+    count++;
+
+    const kids = node.children || [];
+    for (let i = kids.length - 1; i >= 0; i--) {
+      const child = kids[i];
+      stack.push({ node: child, path: `${path}.${child.name}`, depth: depth + 1 });
+    }
+  }
+
+  if (count >= maxNodes) {
+    const warn = document.createElement("div");
+    warn.style.cssText = "margin-top:8px; opacity:0.7;";
+    warn.textContent = `…stopped at ${maxNodes} nodes (cap). Use find to narrow down.`;
+    treeEl.appendChild(warn);
+  }
+
+  // keep current selection on the right if any, otherwise show root
+  showPath(root.name);
+}
     
+ renderFullTree();   
     
     return { inspector, el };
 }
