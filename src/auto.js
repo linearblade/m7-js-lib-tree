@@ -12,6 +12,6 @@ if (!lib || typeof lib.hash?.set !== 'function') {
 }
 
 // Perform the registration
-lib.hash.set(lib, 'tree.inspector', TreeInspector);
+lib.hash.set(lib, 'tree', TreeInspector);
 
 export default TreeInspector;
