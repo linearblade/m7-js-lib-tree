@@ -56,7 +56,7 @@ function console(lib, {
        style="display:grid; grid-template-columns: 1.1fr 1fr;
               height: calc(100% - 46px);">
     <div data-tree
-         style="overflow:auto; padding:10px 12px;
+         style="overflow:auto; padding:10px 12px; max-height:80vh;
                 border-right:1px solid rgba(255,255,255,0.12);"></div>
     <div data-detail
          style="overflow:auto; padding:10px 12px;"></div>
