@@ -90,7 +90,7 @@ class TreeInspector {
               : value === null
               ? "null"
               : t;
-
+	console.log(type);
 	// Handle cycles/shared refs (only for objects/arrays)
 	if (value && t === "object" && seen.has(value)) {
 	    return { type: "ref", name, ref: value };
