@@ -211,34 +211,33 @@ const baseRootPath = currentRootPath;  // its absolute display path (if you have
 	// allow if we have history, or if we're at a base var (lib -> window)
 	if (rootStack.length > 0) return true;
 	//if (BASE_VARS.has(currentRootName)) return true;
-	if (currentRoot === baseRoot) return true;
-
+	if (parentPathOf(currentRootPath)) return true;   // can go up if path has a parent
+	if (currentRoot !== defaultRoot) return true;     // otherwise allow fallback-to-window
 	return false;
     }
 
     function goUpOne() {
-	// 1) if we have history, pop to previous root
+	// 1) history pop (works when you pushed path)
 	if (rootStack.length > 0) {
 	    const prev = rootStack.pop();
 	    setRoot(prev.value, prev.label, { pushHistory: false, path: prev.path });
-
-	    //const prev = rootStack.pop();
-	    //setRoot(prev.value, prev.label, { pushHistory: false });
 	    return;
 	}
 
-	// 2) base-var fallback (lib -> window)
-	/*
-	if (BASE_VARS.has(currentRootName)) {
-	    setRoot(window, "window", { pushHistory: false,path:  'window' }); //maybe defaultRootName later after cleaning
-	    return;
-	}*/
-	if (currentRoot === baseRoot) {
-	    // baseRoot is our “home”; go up to defaultRoot (usually window)
+	// 2) compute parent from absolute path (THIS is the missing piece)
+	const upPath = parentPathOf(currentRootPath);
+	if (upPath) {
+	    const upVal = resolveRootSelector(upPath);
+	    if (upVal != null) {
+		setRoot(upVal, leafNameOf(upPath), { pushHistory: false, path: upPath });
+		return;
+	    }
+	}
+
+	// 3) last fallback: if you're at your initial root, go to defaultRoot (window)
+	if (currentRoot !== defaultRoot && defaultRoot != null) {
 	    setRoot(defaultRoot, defaultRootName, { pushHistory: false, path: defaultRootName });
-	    return;
 	}
-	// 3) otherwise no-op
     }
     
     
