@@ -145,16 +145,18 @@ function console(
 	setDetail({ note: "Re-parsed." });
     };
 
-    const searchFunc = (e) => {
+    const searchFunc = () => {
+	const q = qEl.value.trim();
+	if (!q) return;
+	const hits = inspector.find(q, { match: "both", limit: 80 });
+	renderFindResults(q, hits);
+    } ;
+    el.querySelector("[data-search]").onclick = searchFunc;
+    qEl.addEventListener("keydown", (e) => {
 	if (e.key === "Enter") {
-	    const q = qEl.value.trim();
-	    if (!q) return;
-	    const hits = inspector.find(q, { match: "both", limit: 80 });
-	    renderFindResults(q, hits);
+	    searchFunc();
 	}
-    };
-    el.querySelector("[data-search]").onclick =  searchFunc;
-    qEl.addEventListener("keydown", searchFunc);
+    });
 
     const setRootBtn = el.querySelector("[data-setroot]");
     setRootBtn.onclick = () => {
