@@ -760,7 +760,8 @@ function openConsole(
 	    liUp.onclick = () => goUpOne();
 	    ul.appendChild(liUp);
 	}
-	head.querySelector("[data-rootlabel]")?.onclick = () => showPath(root.name);
+	if(head.querySelector("[data-rootlabel]")?.onclick)
+	    head.querySelector("[data-rootlabel]").onclick= () => showPath(root.name);
 	
 	// DFS stack; we push children in reverse to preserve order
 	const stack = [{ node: root, path: root.name, depth: 0, isLast: true }];
