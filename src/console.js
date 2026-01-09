@@ -411,7 +411,18 @@ function openConsole(
             </div>
 	    ` : ""}
 
-    <div style="white-space:pre-wrap;">preview ${escapeHtml(info.valuePreview)}</div>
+      ${info.valuePreview ? `
+	    <div style="
+               margin:10px 0;
+               padding:8px;
+               border:1px solid rgba(255,255,255,0.12);
+               border-radius:10px;
+               background:rgba(255,255,255,0.05);
+             ">
+	    <div style="opacity:0.8; margin-bottom:6px;">value</div>
+	    <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
+	    </div>
+	    ` : ""}
 
       ${Array.isArray(info.children) && info.children.length ? `
             <div style="margin-top:10px;">
