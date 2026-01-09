@@ -384,7 +384,7 @@ function console(
 
 	const icon = iconFor(info.type);
 	const sig = info.signature;
-
+	console.log(info);
 	detailEl.innerHTML = `
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
         <div style="font-size:18px;">${icon}</div>
@@ -411,7 +411,7 @@ function console(
             </div>
 	    ` : ""}
 
-    <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
+    <div style="white-space:pre-wrap;">preview ${escapeHtml(info.valuePreview)}</div>
 
       ${Array.isArray(info.children) && info.children.length ? `
             <div style="margin-top:10px;">
