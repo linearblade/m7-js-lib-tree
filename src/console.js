@@ -604,34 +604,46 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
 	    </div>
 	    ` : ""}
 
-${info.children.slice(0, 60).map(c => {
-  const base =
-    (String(info.path || "") === currentRootName ||
-     String(info.path || "").startsWith(currentRootName + "."))
-      ? info.path
-      : currentRootName;
+      ${Array.isArray(info.children) && info.children.length ? `
+            <div style="margin-top:10px;">
+            <div style="opacity:0.8; margin-bottom:6px;">children</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${info.children.slice(0, 60).map(c => `
+              <button data-path="${escapeAttr(
+  (
+    String(info.path || "") === currentRootName ||
+    String(info.path || "").startsWith(currentRootName + ".")
+  )
+    ? (info.path + "." + c.name)
+    : (currentRootName + "." + c.name)
+)}"
 
-  const childPath = `${base}.${c.name}`;
-
-  return `
-    <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
-      ${escapeHtml(iconFor(c.type))} ${escapeHtml(c.name)}
-    </button>
-  `;
-}).join("")}
+style="${chipCss()}">
+                ${escapeHtml(iconFor(c.type))} ${escapeHtml(c.name)}
               </button>
             `).join("")}
         </div>
             </div>
 	    ` : `<div style="opacity:0.7;">(no children)</div>`}
+
+
     `;
+
 	/*
+	        ${Array.isArray(info.children) && info.children.length ? `
+            <div style="margin-top:10px;">
+            <div style="opacity:0.8; margin-bottom:6px;">children</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${info.children.slice(0, 60).map(c => `
               <button data-path="${escapeAttr(info.path + "." + c.name)}" style="${chipCss()}">
                 ${escapeHtml(iconFor(c.type))} ${escapeHtml(c.name)}
               </button>
             `).join("")}
+        </div>
+            </div>
+            ` : `<div style="opacity:0.7;">(no children)</div>`}
 	 */
+	
 	const useRootBtn = detailEl.querySelector("[data-use-root]");
 	if (useRootBtn) {
 	    useRootBtn.onclick = () => {
