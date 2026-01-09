@@ -93,7 +93,6 @@ class TreeInspector {
 	console.log(type,t);
 	// Handle cycles/shared refs (only for objects/arrays)
 	if (value && t === "object" && seen.has(value)) {
-	    
 	    return { type: "ref", name, ref: value };
 	}
 
@@ -295,6 +294,8 @@ class TreeInspector {
 	    childrenPreview: Array.isArray(node.children)
 		? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
 		: [],
+	    valuePreview: node.valuePreview ?? null,
+	    valueKind: node.valueKind ?? null,
 	};
 
 	if (includeChildren) payload.children = node.children || [];
