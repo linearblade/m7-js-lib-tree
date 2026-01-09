@@ -109,7 +109,7 @@ class TreeInspector {
 	    node.valuePreview = preview;
 	    node.valueKind = kind;
 	}else {
-	    console.log('no dice for');
+	    console.log('no dice for', isRef, type);
 	}
 	
 	// Register before descending (cycle-safe)
