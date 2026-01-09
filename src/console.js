@@ -560,9 +560,9 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
 
 	const icon = iconFor(info.type);
 	const sig = info.signature;
-	//console.log(info);
+	console.log(info);
 	detailEl.innerHTML = `
-        <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(currentRootPath)}</div>
+        <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
 
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
         <div style="font-size:18px;">${icon}</div>
