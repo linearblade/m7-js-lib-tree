@@ -108,6 +108,8 @@ class TreeInspector {
 	    const { preview, kind } = formatScalar(value);
 	    node.valuePreview = preview;
 	    node.valueKind = kind;
+	}else {
+	    console.log('no dice for');
 	}
 	
 	// Register before descending (cycle-safe)
