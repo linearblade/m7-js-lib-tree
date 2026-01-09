@@ -31,7 +31,7 @@ function openConsole(
 	  inferRootName(lib, { globals: true, fallback: "root" });
 
     const rootLabel     = rootName ?? inferred;
-    let currentRootPath = rootLabel;   // <-- full path label for tree view
+    //let currentRootPath = rootLabel;   // <-- full path label for tree view
     
     const inspector     = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
