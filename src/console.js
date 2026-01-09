@@ -153,7 +153,7 @@ function console(
 	    renderFindResults(q, hits);
 	}
     };
-    searchEl.querySelector("[data-search]").onclick =  searchFunc;
+    el.querySelector("[data-search]").onclick =  searchFunc;
     qEl.addEventListener("keydown", searchFunc);
 
     const setRootBtn = el.querySelector("[data-setroot]");
