@@ -35,6 +35,9 @@ function console(
     let currentRoot     = lib;                 // whatever you initially opened with
     let currentRootName = inspector.tree?.name || "root"; // just for display / parse
     const expanded      = new Set(); // paths that are expanded
+    //backbutton / up 1 dir stuff
+    const rootStack = []; // previous roots (values + labels)
+    const BASE_VARS = new Set(["lib"]); // add more later if you want
     
     /*
       {
@@ -169,8 +172,69 @@ function console(
     mount.appendChild(el);
 
 
+    // ----- back or up dir ----
+
+    function isBaseVarRoot() {
+	return (
+	    BASE_VARS.has(currentRootName) ||
+		(typeof window === "object" && window.lib && currentRoot === window.lib)
+	);
+    }
+    
+    function canGoUp() {
+	// never show ../ when at window/globalThis
+	if (currentRoot === window || currentRoot === globalThis) return false;
+
+	// allow if we have history, or if we're at a base var (lib -> window)
+	if (rootStack.length > 0) return true;
+	if (BASE_VARS.has(currentRootName)) return true;
+
+	return false;
+    }
+
+    function goUpOne() {
+	// 1) if we have history, pop to previous root
+	if (rootStack.length > 0) {
+	    const prev = rootStack.pop();
+	    setRoot(prev.value, prev.label, { pushHistory: false });
+	    return;
+	}
+
+	// 2) base-var fallback (lib -> window)
+	if (BASE_VARS.has(currentRootName)) {
+	    setRoot(window, "window", { pushHistory: false });
+	    return;
+	}
+
+	// 3) otherwise no-op
+    }
+    
+    
     // ----- root switching ----
-    function setRoot(newRoot, name = null) {
+
+    function setRoot(newRoot, name = null, { pushHistory = true } = {}) {
+	if (!newRoot) return;
+
+	if (pushHistory && currentRoot && currentRoot !== newRoot) {
+	    rootStack.push({ value: currentRoot, label: currentRootName });
+	}
+
+	currentRoot = newRoot;
+	currentRootName = name ?? inferRootName(newRoot, { fallback: "root" });
+
+	inspector.rootRef = newRoot;
+	inspector.options = inspector.options || {};
+	inspector.options.name = currentRootName;
+
+	inspector.parse({ name: currentRootName, maxDepth });
+
+	expanded.clear();
+	expanded.add(currentRootName);
+
+	renderCollapsibleTree(); // your tree render entry point
+    }
+    
+    function setRootold(newRoot, name = null) {
 	if (!newRoot) return;
 
 	currentRoot = newRoot;
@@ -314,6 +378,7 @@ function console(
           <div style="font-weight:700;">${escapeHtml(info.path)}</div>
           <div style="opacity:0.75;">type: ${escapeHtml(info.type)} ${info.childCount ? ` • children: ${info.childCount}` : ""}</div>
         </div>
+        <button data-up-root style="${chipCss()}">../</button>
         <button data-use-root style="${chipCss()}">⤴︎ use as root</button>
       </div>
 
@@ -353,7 +418,14 @@ function console(
 		setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
 	    };
 	}
-
+	const upRootBtn = detailEl.querySelector("[data-up-root]");
+	if (upRootBtn) {
+	    if (!canGoUp()) {
+		upRootBtn.style.display = "none";
+	    } else {
+		upRootBtn.onclick = () => goUpOne();
+	    }
+	}
 	
 	// wire child chips
 	detailEl.querySelectorAll("button[data-path]").forEach(btn => {
@@ -521,12 +593,19 @@ function console(
 	const head = document.createElement("div");
 	head.style.cssText = "margin-bottom:8px; opacity:0.9; display:flex; gap:8px; align-items:center;";
 	head.innerHTML = `
-    <span style="opacity:0.9;">tree</span>
-    <button data-expandall style="${chipCss()}">expand all</button>
-    <button data-collapseall style="${chipCss()}">collapse all</button>
-  `;
+          <span style="opacity:0.9;">tree</span>
+          <button data-up style="${chipCss()}">../</button>
+          <button data-expandall style="${chipCss()}">expand all</button>
+         <button data-collapseall style="${chipCss()}">collapse all</button>
+       `;
 	treeEl.appendChild(head);
-
+	const upBtn = head.querySelector("[data-up]");
+	if (!canGoUp()) {
+	    upBtn.style.display = "none";
+	} else {
+	    upBtn.onclick = () => goUpOne();
+	}
+	
 	const ul = document.createElement("ul");
 	ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
 	treeEl.appendChild(ul);
