@@ -420,7 +420,7 @@ class TreeInspector {
 		return String(hay).toLowerCase().includes(needle);
 	    };
 	}
-\
+
 	const results = [];
 	const stack = [{ node: this.tree, path: this.tree.name, parentPath: null }];
 
