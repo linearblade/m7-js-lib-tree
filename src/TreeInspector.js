@@ -104,6 +104,7 @@ class TreeInspector {
 
 	const isRef = type === "ref";
 	if (!isNonTerminal && !isRef && type !== "function" && type !== "class") {
+	    console.log('trying to get value for ',value);
 	    const { preview, kind } = formatScalar(value);
 	    node.valuePreview = preview;
 	    node.valueKind = kind;
