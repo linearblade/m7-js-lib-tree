@@ -27,11 +27,14 @@ function console(
 	  name ??
 	  inferRootName(lib, { globals: true, fallback: "root" });
 
-    const rootLabel = rootName ?? inferred;
+    const rootLabel     = rootName ?? inferred;
 
-    const inspector = new TreeInspector(lib, { autoParse: false,name:rootLabel });
+    const inspector     = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
-    const expanded = new Set(); // paths that are expanded
+
+    let currentRoot     = lib;                 // whatever you initially opened with
+    let currentRootName = inspector.tree?.name || "root"; // just for display / parse
+    const expanded      = new Set(); // paths that are expanded
     
     /*
       {
@@ -73,6 +76,7 @@ function console(
               border-bottom:1px solid rgba(255,255,255,0.12);">
     <div style="font-weight:700;">${escapeHtml(title)}</div>
 <button data-treeview title="tree view" style="${btnCss()}">🌳</button>
+<button data-setroot title="use input as root" style="${btnCss()}">🎯</button>
 <input data-q placeholder="find… (name or path)" style="
   flex:1; min-width:200px; background: rgba(255,255,255,0.08); color:#fff;
   border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
@@ -94,6 +98,14 @@ function console(
          style="overflow:auto; padding:10px 12px;"></div>
   </div>
 `;
+
+    const useRootBtn = detailEl.querySelector("[data-use-root]");
+    if (useRootBtn) {
+	useRootBtn.onclick = () => {
+	    // If they are inspecting a node, its ref is the value we want to re-root to.
+	    setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
+	};
+    }
     /*
       el.innerHTML = `
       <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.12);">
@@ -142,8 +154,85 @@ function console(
 	}
     });
 
+    const setRootBtn = el.querySelector("[data-setroot]");
+    setRootBtn.onclick = () => {
+	const val = resolveRootSelector(qEl.value);
+	if (!val) {
+	    // show a message in detail panel
+	    detailEl.innerHTML = `<div style="color:#ffb3b3;">Not found: ${escapeHtml(qEl.value)}</div>`;
+	    return;
+	}
+	// label is the raw input (nice: if they typed "window.lib", name becomes that)
+	setRoot(val, qEl.value.trim());
+    };
+
+    qEl.addEventListener("keydown", (e) => {
+	if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+	    setRootBtn.click();
+	}
+    });
+    
     mount.appendChild(el);
 
+
+    // ----- root switching ----
+    function setRoot(newRoot, name = null) {
+	if (!newRoot) return;
+
+	currentRoot = newRoot;
+
+	// Pick a label for the parse root:
+	// - explicit name if provided
+	// - infer from globals if possible
+	// - fallback "root"
+	currentRootName = name ?? inferRootName(newRoot, { fallback: "root" });
+
+	// Rebuild inspector on new root (simplest + cleanest)
+	inspector.rootRef = newRoot;
+	inspector.options = inspector.options || {};
+	inspector.options.name = currentRootName;
+
+	inspector.parse({ name: currentRootName, maxDepth });
+
+	// reset UI state
+	expanded.clear();
+	expanded.add(currentRootName);
+
+	renderCollapsibleTree(); // or whatever your tree render entry point is
+    }
+
+    function resolveRootSelector(selector) {
+  const s = String(selector || "").trim();
+  if (!s) return null;
+
+  // allow "window" / "globalThis" / "lib" / "window.lib.utils"
+  const base = globalThis; // browsers: window === globalThis
+
+  // If they type a bare word like "lib", try:
+  // 1) current root child
+  // 2) globalThis child
+  // 3) dot path from globalThis
+  if (!s.includes(".")) {
+    if (currentRoot && s in currentRoot) return currentRoot[s];
+    if (s in base) return base[s];
+  }
+
+  // Dot path: walk from globalThis first (covers "window.lib", "lib.site", etc)
+  const parts = s.split(".").filter(Boolean);
+  let obj = base;
+
+  for (const p of parts) {
+    if (obj == null) return null;
+    try {
+      obj = obj[p];
+    } catch {
+      return null;
+    }
+  }
+
+  return obj;
+}
+    
     // ---------- Render ----------
     function renderTree() {
 	// render only first level; click to navigate
@@ -231,6 +320,7 @@ function console(
           <div style="font-weight:700;">${escapeHtml(info.path)}</div>
           <div style="opacity:0.75;">type: ${escapeHtml(info.type)} ${info.childCount ? ` • children: ${info.childCount}` : ""}</div>
         </div>
+        <button data-use-root style="${chipCss()}">⤴︎ use as root</button>
       </div>
 
       ${sig ? `
