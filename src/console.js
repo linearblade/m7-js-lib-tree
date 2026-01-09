@@ -378,8 +378,8 @@ function console(
           <div style="font-weight:700;">${escapeHtml(info.path)}</div>
           <div style="opacity:0.75;">type: ${escapeHtml(info.type)} ${info.childCount ? ` • children: ${info.childCount}` : ""}</div>
         </div>
-        <button data-up-root style="${chipCss()}">../</button>
-        <button data-use-root style="${chipCss()}">⤴︎ use as root</button>
+        <button data-up-root style="${chipCss()}">../</button> <!--⤴︎ -->
+        <button data-use-root style="${chipCss()}">🎯</button>
       </div>
 
       ${sig ? `
