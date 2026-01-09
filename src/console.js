@@ -31,7 +31,8 @@ function openConsole(
 	  inferRootName(lib, { globals: true, fallback: "root" });
 
     const rootLabel     = rootName ?? inferred;
-
+    let currentRootPath = rootLabel;   // <-- full path label for tree view
+    
     const inspector     = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
 
@@ -562,6 +563,7 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
 	//console.log(info);
 	detailEl.innerHTML = `
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+        <div style="opacity:0.8;">${escapeHtml(currentRootPath)}</div>
         <div style="font-size:18px;">${icon}</div>
         <div>
           <div style="font-weight:700;">${escapeHtml(info.path)}</div>
