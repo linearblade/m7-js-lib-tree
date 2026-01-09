@@ -798,7 +798,7 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
 
 	const head = document.createElement("div");
 	head.style.cssText = "margin-bottom:8px; opacity:0.9; display:flex; gap:8px; align-items:center;";
-	console.log(root);
+	console.log('collapsible tree root' , root);
 	head.innerHTML = `
           <span style="opacity:0.9;">
           root: <span style="opacity:1; font-weight:700;">${escapeHtml(root.name)}</span>
