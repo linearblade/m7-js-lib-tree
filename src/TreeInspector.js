@@ -100,8 +100,6 @@ class TreeInspector {
 	Object.assign(node, TreeInspector.NODE_ENRICHERS[type]?.(value));
 
 	const isNonTerminal = type === "hash" || type === "array";
-	if (!isNonTerminal) return node;
-
 	const isRef = type === "ref";
 	if (!isNonTerminal && !isRef && type !== "function" && type !== "class") {
 	    console.log('trying to get value for ',value);
@@ -111,6 +109,10 @@ class TreeInspector {
 	}else {
 	    console.log('no dice for', isRef, type);
 	}
+
+	
+	if (!isNonTerminal) return node;
+
 	
 	// Register before descending (cycle-safe)
 	seen.set(value, node);
