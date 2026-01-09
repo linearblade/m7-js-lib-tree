@@ -609,11 +609,11 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
             <div style="opacity:0.8; margin-bottom:6px;">children</div>
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
             ${info.children.slice(0, 60).map(c => `
-              <button data-path=${info.children.slice(0, 60).map(c => `
-              <button data-path="${escapeAttr(info.path + "." + c.name)}" style="${chipCss()}">
-                ${escapeHtml(iconFor(c.type))} ${escapeHtml(c.name)}
-              </button>
-            `).join("")}
+              <button =data-path="${escapeAttr(
+  (String(info.path || "").startsWith(currentRootName + ".") || String(info.path || "") === currentRootName)
+    ? (info.path + "." + c.name)
+    : (currentRootName + "." + c.name)
+)}"
               </button>
             `).join("")}
         </div>
