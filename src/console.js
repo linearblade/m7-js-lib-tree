@@ -79,7 +79,7 @@ function openConsole(
               border-bottom:1px solid rgba(255,255,255,0.12);">
     <div style="font-weight:700;">${escapeHtml(title)}</div>
 <button data-treeview title="tree view" style="${btnCss()}">🌳</button>
-<button data-setroot title="use input as root" style="${btnCss()}">🎯</button>
+<button data-setroot title="use input as root" style="${btnCss()}">🎯</button> <!-- set target -->
     <button data-reparse style="${btnCss()}">🔄</button> <!-- reparse -->
 
 <input data-q placeholder="find… (name or path)" style="
@@ -393,7 +393,9 @@ function openConsole(
           <div style="opacity:0.75;">type: ${escapeHtml(info.type)} ${info.childCount ? ` • children: ${info.childCount}` : ""}</div>
         </div>
         <button data-up-root style="${chipCss()}">../</button> <!--⤴︎ -->
-        <button data-use-root style="${chipCss()}">🎯</button>
+       ${ info?.ref &&  (info.type === "hash" || info.type === "array") ? `
+            <button data-use-root style="${chipCss()}">🎯</button> <!-- set target -->
+	    ` : "" }
       </div>
 
       ${sig ? `
