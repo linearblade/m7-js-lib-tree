@@ -31,14 +31,14 @@ function openConsole(
 	  inferRootName(lib, { globals: true, fallback: "root" });
 
     const rootLabel     = rootName ?? inferred;
-    //let currentRootPath = rootLabel;   // <-- full path label for tree view
+    let currentRootPath = rootLabel;   // <-- full path label for tree view
     
     const inspector     = new TreeInspector(lib, { autoParse: false,name:rootLabel });
     inspector.parse({ name: rootLabel, maxDepth });
 
     let currentRoot     = lib;                 // whatever you initially opened with
-    let currentRootName = inspector.tree?.name || "root"; // just for display / parse
-    let currentRootPath = currentRootName; // default, overridden when we know better
+    let currentRootName = rootLabel; //inspector.tree?.name || "root"; // just for display / parse
+    //let currentRootPath = currentRootName; // default, overridden when we know better
     const expanded      = new Set(); // paths that are expanded
     //backbutton / up 1 dir stuff
     const rootStack = []; // previous roots (values + labels)
