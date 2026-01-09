@@ -80,14 +80,15 @@ function console(
     <div style="font-weight:700;">${escapeHtml(title)}</div>
 <button data-treeview title="tree view" style="${btnCss()}">🌳</button>
 <button data-setroot title="use input as root" style="${btnCss()}">🎯</button>
-    <button data-reparse style="${btnCss()}">↻</button>
+    <button data-reparse style="${btnCss()}">↻</button> <!-- reparse -->
+
 <input data-q placeholder="find… (name or path)" style="
   flex:1; min-width:200px; background: rgba(255,255,255,0.08); color:#fff;
   border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
   padding: 6px 8px; outline: none;
 "/>
 
-
+    <button data-search style="${btnCss()}">🔍</button>
     <button data-close style="${btnCss()}">×</button>
   </div>
 
@@ -125,6 +126,7 @@ function console(
     const treeEl = el.querySelector("[data-tree]");
     const detailEl = el.querySelector("[data-detail]");
     const qEl = el.querySelector("[data-q]");
+    const searchEl = el.querySelector("[data-search]");
     
     const treeBtn = el.querySelector("[data-treeview]");
     treeBtn.onclick = () => renderFullTree();
@@ -143,14 +145,16 @@ function console(
 	setDetail({ note: "Re-parsed." });
     };
 
-    qEl.addEventListener("keydown", (e) => {
+    const searchFunc = (e) => {
 	if (e.key === "Enter") {
 	    const q = qEl.value.trim();
 	    if (!q) return;
 	    const hits = inspector.find(q, { match: "both", limit: 80 });
 	    renderFindResults(q, hits);
 	}
-    });
+    };
+    searchEl.querySelector("[data-search]").onclick =  searchFunc;
+    qEl.addEventListener("keydown", searchFunc);
 
     const setRootBtn = el.querySelector("[data-setroot]");
     setRootBtn.onclick = () => {
