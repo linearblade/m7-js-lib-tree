@@ -379,7 +379,7 @@ class TreeInspector {
      * @returns {Array<any>} - list of matching nodes (or result objects)
      */
 
-    find(partial, opts = {}) \{
+    find(partial, opts = {}) {
 	const {
 	    limit = 50,
 	    types = null,          // e.g. ["function","class","hash"]
