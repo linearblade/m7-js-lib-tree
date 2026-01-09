@@ -472,7 +472,10 @@ class TreeInspector {
 	return results;
 }
 
-static formatScalar(value, maxLen = 140) {
+
+}
+
+function formatScalar(value, maxLen = 140) {
     const t = typeof value;
 
     if (value === null) return { preview: "null", kind: "null" };
@@ -497,8 +500,6 @@ static formatScalar(value, maxLen = 140) {
 	return { preview: "[unprintable]", kind: "unknown" };
     }
 }
-}
-
 function factory(...args){
     return new TreeInspector(...args);
 }
