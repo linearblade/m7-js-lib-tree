@@ -80,7 +80,7 @@ function console(
     <div style="font-weight:700;">${escapeHtml(title)}</div>
 <button data-treeview title="tree view" style="${btnCss()}">🌳</button>
 <button data-setroot title="use input as root" style="${btnCss()}">🎯</button>
-    <button data-reparse style="${btnCss()}">↻</button> <!-- reparse -->
+    <button data-reparse style="${btnCss()}">🔄</button> <!-- reparse -->
 
 <input data-q placeholder="find… (name or path)" style="
   flex:1; min-width:200px; background: rgba(255,255,255,0.08); color:#fff;
@@ -140,11 +140,17 @@ function console(
     //el.querySelector("[data-close]").onclick = () => el.remove();
 
     el.querySelector("[data-reparse]").onclick = () => {
+  setRoot(currentRoot, currentRootName, { pushHistory: false });
+  setDetail({ note: "Re-parsed." });
+    };
+    /*
+      //old sauce
+    el.querySelector("[data-reparse]").onclick = () => {
 	inspector.parse({ name: rootName, maxDepth });
 	renderTree();
 	setDetail({ note: "Re-parsed." });
     };
-
+    */
     const searchFunc = () => {
 	const q = qEl.value.trim();
 	if (!q) return;
