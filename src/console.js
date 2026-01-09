@@ -99,13 +99,6 @@ function console(
   </div>
 `;
 
-    const useRootBtn = detailEl.querySelector("[data-use-root]");
-    if (useRootBtn) {
-	useRootBtn.onclick = () => {
-	    // If they are inspecting a node, its ref is the value we want to re-root to.
-	    setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
-	};
-    }
     /*
       el.innerHTML = `
       <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.12);">
@@ -137,6 +130,14 @@ function console(
 	disableToggle(el);
 	el.remove();
     };
+       const useRootBtn = detailEl.querySelector("[data-use-root]");
+    if (useRootBtn) {
+	useRootBtn.onclick = () => {
+	    // If they are inspecting a node, its ref is the value we want to re-root to.
+	    setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
+	};
+    }
+ 
     //el.querySelector("[data-close]").onclick = () => el.remove();
 
     el.querySelector("[data-reparse]").onclick = () => {
