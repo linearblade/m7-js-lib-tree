@@ -71,7 +71,7 @@ class TreeInspector {
 	    this.tree = null;
 	    this.index.byPath.clear();
 	    this.index.byRef = new WeakMap();
-	    console.log(`parsing with '${name}'`);
+	    //console.log(`parsing with '${name}'`);
 
 	}
 	const t = typeof value;
@@ -90,7 +90,7 @@ class TreeInspector {
               : value === null
               ? "null"
               : t;
-	console.log(type,t);
+	//console.log(type,t);
 	// Handle cycles/shared refs (only for objects/arrays)
 	if (value && t === "object" && seen.has(value)) {
 	    return { type: "ref", name, ref: value };
@@ -102,12 +102,12 @@ class TreeInspector {
 	const isNonTerminal = type === "hash" || type === "array";
 	const isRef = type === "ref";
 	if (!isNonTerminal && !isRef && type !== "function" && type !== "class") {
-	    console.log('trying to get value for ',value);
+	    //console.log('trying to get value for ',value);
 	    const { preview, kind } = formatScalar(value);
 	    node.valuePreview = preview;
 	    node.valueKind = kind;
 	}else {
-	    console.log('no dice for', isRef, type);
+	    //console.log('no dice for', isRef, type);
 	}
 
 	
@@ -269,7 +269,7 @@ class TreeInspector {
 	    includeRef = true,        // include the raw ref in payload
 	    show = false,             // if true, console.log a friendly summary
 	} = opts;
-	console.log(`inspecting ${String(target)}`);
+	//console.log(`inspecting ${String(target)}`);
 	if (!this.tree && reparseIfMissing) this.parse({ name: rootName });
 	if (!this.tree) return null;
 

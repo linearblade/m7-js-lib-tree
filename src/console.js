@@ -167,6 +167,7 @@ function openConsole(
     const setRootBtn = el.querySelector("[data-setroot]");
     setRootBtn.onclick = () => {
 	const val = resolveRootSelector(qEl.value);
+	//console.log(`set root val ${val}`,val);
 	if (!val) {
 	    // show a message in detail panel
 	    detailEl.innerHTML = `<div style="color:#ffb3b3;">Not found: ${escapeHtml(qEl.value)}</div>`;
@@ -384,7 +385,7 @@ function openConsole(
 
 	const icon = iconFor(info.type);
 	const sig = info.signature;
-	console.log(info);
+	//console.log(info);
 	detailEl.innerHTML = `
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
         <div style="font-size:18px;">${icon}</div>
