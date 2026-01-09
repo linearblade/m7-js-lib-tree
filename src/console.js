@@ -45,7 +45,7 @@ function console(
       title = "m7 Tree Console",
       rootName = "root",
       maxDepth = 25,
-      rootVar  = window
+\      rootVar  = window
       } = {}) {
       const name = opts.name ?? inferRootName(rootVar);
 
@@ -136,19 +136,19 @@ function console(
 	disableToggle(el);
 	el.remove();
     };
- 
+    
     //el.querySelector("[data-close]").onclick = () => el.remove();
 
     el.querySelector("[data-reparse]").onclick = () => {
-  setRoot(currentRoot, currentRootName, { pushHistory: false });
-  setDetail({ note: "Re-parsed." });
+	setRoot(currentRoot, currentRootName, { pushHistory: false });
+	setDetail({ note: "Re-parsed." });
     };
     /*
-      //old sauce
+    //old sauce
     el.querySelector("[data-reparse]").onclick = () => {
-	inspector.parse({ name: rootName, maxDepth });
-	renderTree();
-	setDetail({ note: "Re-parsed." });
+    inspector.parse({ name: rootName, maxDepth });
+    renderTree();
+    setDetail({ note: "Re-parsed." });
     };
     */
     const searchFunc = () => {
@@ -273,36 +273,36 @@ function console(
     }
 
     function resolveRootSelector(selector) {
-  const s = String(selector || "").trim();
-  if (!s) return null;
+	const s = String(selector || "").trim();
+	if (!s) return null;
 
-  // allow "window" / "globalThis" / "lib" / "window.lib.utils"
-  const base = globalThis; // browsers: window === globalThis
+	// allow "window" / "globalThis" / "lib" / "window.lib.utils"
+	const base = globalThis; // browsers: window === globalThis
 
-  // If they type a bare word like "lib", try:
-  // 1) current root child
-  // 2) globalThis child
-  // 3) dot path from globalThis
-  if (!s.includes(".")) {
-    if (currentRoot && s in currentRoot) return currentRoot[s];
-    if (s in base) return base[s];
-  }
+	// If they type a bare word like "lib", try:
+	// 1) current root child
+	// 2) globalThis child
+	// 3) dot path from globalThis
+	if (!s.includes(".")) {
+	    if (currentRoot && s in currentRoot) return currentRoot[s];
+	    if (s in base) return base[s];
+	}
 
-  // Dot path: walk from globalThis first (covers "window.lib", "lib.site", etc)
-  const parts = s.split(".").filter(Boolean);
-  let obj = base;
+	// Dot path: walk from globalThis first (covers "window.lib", "lib.site", etc)
+	const parts = s.split(".").filter(Boolean);
+	let obj = base;
 
-  for (const p of parts) {
-    if (obj == null) return null;
-    try {
-      obj = obj[p];
-    } catch {
-      return null;
+	for (const p of parts) {
+	    if (obj == null) return null;
+	    try {
+		obj = obj[p];
+	    } catch {
+		return null;
+	    }
+	}
+
+	return obj;
     }
-  }
-
-  return obj;
-}
     
     // ---------- Render ----------
     function renderTree() {
@@ -343,6 +343,7 @@ function console(
 	treeEl.appendChild(ul);
     }
 
+    
     function renderNodeLine(label, type, path, faint = false) {
 	const li = document.createElement("li");
 	li.style.cssText = `
@@ -409,6 +410,8 @@ function console(
             <pre style="white-space:pre-wrap; margin:0;">${escapeHtml(sig.sourcePreview)}</pre>
             </div>
 	    ` : ""}
+
+    <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
 
       ${Array.isArray(info.children) && info.children.length ? `
             <div style="margin-top:10px;">

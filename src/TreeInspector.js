@@ -102,6 +102,13 @@ class TreeInspector {
 	const isNonTerminal = type === "hash" || type === "array";
 	if (!isNonTerminal) return node;
 
+	const isRef = type === "ref";
+	if (!isNonTerminal && !isRef && type !== "function" && type !== "class") {
+	    const { preview, kind } = formatScalar(value);
+	    node.valuePreview = preview;
+	    node.valueKind = kind;
+	}
+	
 	// Register before descending (cycle-safe)
 	seen.set(value, node);
 
@@ -372,7 +379,7 @@ class TreeInspector {
      * @returns {Array<any>} - list of matching nodes (or result objects)
      */
 
-    find(partial, opts = {}) {
+    find(partial, opts = {}) \{
 	const {
 	    limit = 50,
 	    types = null,          // e.g. ["function","class","hash"]
@@ -413,7 +420,7 @@ class TreeInspector {
 		return String(hay).toLowerCase().includes(needle);
 	    };
 	}
-
+\
 	const results = [];
 	const stack = [{ node: this.tree, path: this.tree.name, parentPath: null }];
 
@@ -463,7 +470,33 @@ class TreeInspector {
 	}
 
 	return results;
-    }   
+}
+
+static formatScalar(value, maxLen = 140) {
+    const t = typeof value;
+
+    if (value === null) return { preview: "null", kind: "null" };
+    if (t === "undefined") return { preview: "undefined", kind: "undefined" };
+    if (t === "string") {
+	const s = value.length > maxLen ? value.slice(0, maxLen) + "…" : value;
+	return { preview: JSON.stringify(s), kind: "string" }; // keep quotes
+    }
+    if (t === "number" || t === "bigint") return { preview: String(value), kind: t };
+    if (t === "boolean") return { preview: value ? "true" : "false", kind: "boolean" };
+    if (t === "symbol") return { preview: value.toString(), kind: "symbol" };
+
+    // Dates / RegExp (optional nice handling)
+    if (value instanceof Date) return { preview: `Date(${isNaN(value) ? "Invalid" : value.toISOString()})`, kind: "date" };
+    if (value instanceof RegExp) return { preview: value.toString(), kind: "regexp" };
+
+    // fallback
+    try {
+	const s = String(value);
+	return { preview: s.length > maxLen ? s.slice(0, maxLen) + "…" : s, kind: t };
+    } catch {
+	return { preview: "[unprintable]", kind: "unknown" };
+    }
+}
 }
 
 function factory(...args){
