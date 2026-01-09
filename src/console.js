@@ -136,6 +136,8 @@ function console(
 	    // If they are inspecting a node, its ref is the value we want to re-root to.
 	    setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
 	};
+    }else {
+	alert('no use root btn');
     }
  
     //el.querySelector("[data-close]").onclick = () => el.remove();
