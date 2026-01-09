@@ -736,16 +736,11 @@ function openConsole(
 	ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
 	treeEl.appendChild(ul);
 
-	//tree path
 
-	const ul = document.createElement("ul");
-ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
-treeEl.appendChild(ul);
-
-// ✅ Add ../ as first list item
-if (canGoUp()) {
-  const liUp = document.createElement("li");
-  liUp.style.cssText = `
+	// current tree path
+	if (canGoUp()) {
+	    const liUp = document.createElement("li");
+	    liUp.style.cssText = `
     display:flex;
     align-items:center;
     gap:6px;
@@ -755,16 +750,16 @@ if (canGoUp()) {
     user-select: none;
     opacity: 0.9;
   `;
-  liUp.onmouseenter = () => liUp.style.background = "rgba(255,255,255,0.08)";
-  liUp.onmouseleave = () => liUp.style.background = "transparent";
-  liUp.innerHTML = `
+	    liUp.onmouseenter = () => liUp.style.background = "rgba(255,255,255,0.08)";
+	    liUp.onmouseleave = () => liUp.style.background = "transparent";
+	    liUp.innerHTML = `
     <span style="width:16px; display:inline-flex; justify-content:center;">⬅︎</span>
     <span style="font-weight:700;">../</span>
     <span style="opacity:0.6;">up</span>
   `;
-  liUp.onclick = () => goUpOne();
-  ul.appendChild(liUp);
-}
+	    liUp.onclick = () => goUpOne();
+	    ul.appendChild(liUp);
+	}
 	head.querySelector("[data-rootlabel]")?.onclick = () => showPath(root.name);
 	
 	// DFS stack; we push children in reverse to preserve order
