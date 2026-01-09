@@ -840,6 +840,7 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
     cursor: pointer;
     user-select: none;
     opacity: 0.9;
+   color:yellow;
   `;
 	    liUp.onmouseenter = () => liUp.style.background = "rgba(255,255,255,0.08)";
 	    liUp.onmouseleave = () => liUp.style.background = "transparent";
