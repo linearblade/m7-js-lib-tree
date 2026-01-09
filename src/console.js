@@ -648,7 +648,8 @@ style="${chipCss()}">
 	if (useRootBtn) {
 	    useRootBtn.onclick = () => {
 		// If they are inspecting a node, its ref is the value we want to re-root to.
-		setRoot(info.ref, info.name, {path:info.path}); // name becomes the last segment (e.g., "lib")
+		//setRoot(info.ref, info.name, {path:info.path}); // name becomes the last segment (e.g., "lib")
+		setRoot(info.ref, info.name, { path: info.path, pushHistory: true });
 	    };
 	}
 	const upRootBtn = detailEl.querySelector("[data-up-root]");
