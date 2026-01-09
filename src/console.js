@@ -567,7 +567,7 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
       <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
         <div style="font-size:18px;">${icon}</div>
         <div>
-          <div style="font-weight:700;">${escapeHtml(info.path)}</div>
+          <div style="font-weight:700;">${escapeHtml(info.name)}</div>
           <div style="opacity:0.75;">type: ${escapeHtml(info.type)} ${info.childCount ? ` • children: ${info.childCount}` : ""}</div>
         </div>
         <button data-up-root style="${chipCss()}">../</button> <!--⤴︎ -->
