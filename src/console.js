@@ -43,6 +43,10 @@ function openConsole(
     //backbutton / up 1 dir stuff
     const rootStack = []; // previous roots (values + labels)
     const BASE_VARS = new Set(["lib"]); // add more later if you want
+
+    const baseRoot = currentRoot;          // the initial object you opened (lib, window, whatever)
+const baseRootName = currentRootName;  // its parse label
+const baseRootPath = currentRootPath;  // its absolute display path (if you have it)
     
     /*
       {
@@ -206,7 +210,8 @@ function openConsole(
 
 	// allow if we have history, or if we're at a base var (lib -> window)
 	if (rootStack.length > 0) return true;
-	if (BASE_VARS.has(currentRootName)) return true;
+	//if (BASE_VARS.has(currentRootName)) return true;
+	if (currentRoot === baseRoot) return true;
 
 	return false;
     }
@@ -223,11 +228,16 @@ function openConsole(
 	}
 
 	// 2) base-var fallback (lib -> window)
+	/*
 	if (BASE_VARS.has(currentRootName)) {
 	    setRoot(window, "window", { pushHistory: false,path:  'window' }); //maybe defaultRootName later after cleaning
 	    return;
+	}*/
+	if (currentRoot === baseRoot) {
+	    // baseRoot is our “home”; go up to defaultRoot (usually window)
+	    setRoot(defaultRoot, defaultRootName, { pushHistory: false, path: defaultRootName });
+	    return;
 	}
-
 	// 3) otherwise no-op
     }
     
