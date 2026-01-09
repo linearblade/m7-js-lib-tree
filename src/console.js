@@ -16,6 +16,9 @@ function openConsole(
 	name = null,           // optional override
     } = {}
 ) {
+
+    const defaultRoot = window??null;                          
+    const defaultRootName = inferRootName(defaultRoot, { fallback: "root" });
     if (!lib) throw new Error("[tree.console] lib is required");
     if (!TreeInspector) throw new Error("[console] TreeInspector not installed");
     
@@ -226,7 +229,89 @@ function openConsole(
     
     // ----- root switching ----
 
-    function setRoot(newRoot, name = null, { pushHistory = true } = {}) {
+    function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault = true } = {}) {
+  if (newRoot == null) return false;
+
+  // reject scalars early (prevents "locked" roots)
+  const tt = typeof newRoot;
+  const rootable = newRoot && (tt === "object" || tt === "function");
+  if (!rootable) return false;
+
+  // snapshot current known-good state
+  const prev = {
+    root: currentRoot,
+    name: currentRootName,
+    tree: inspector.tree,
+    stackLen: rootStack.length,
+  };
+
+  const nextName = (name ?? inferRootName(newRoot, { fallback: "root" })) || "root";
+
+  try {
+    // Attempt parse WITHOUT committing history/state yet
+    inspector.rootRef = newRoot;
+    inspector.options = inspector.options || {};
+    inspector.options.name = nextName;
+
+    inspector.parse({ name: nextName, maxDepth });
+
+    // parse succeeded but still validate tree
+    if (!inspector.tree) throw new Error("parse produced null tree");
+
+    // Commit history only after success
+    if (pushHistory && prev.root && prev.root !== newRoot) {
+      rootStack.push({ value: prev.root, label: prev.name });
+    }
+
+    // Commit current state
+    currentRoot = newRoot;
+    currentRootName = nextName;
+
+    expanded.clear();
+    expanded.add(currentRootName);
+
+    renderCollapsibleTree();
+    return true;
+
+  } catch (err) {
+    // Revert to previous known-good state
+    currentRoot = prev.root;
+    currentRootName = prev.name;
+
+    inspector.rootRef = prev.root;
+    inspector.options = inspector.options || {};
+    inspector.options.name = prev.name;
+
+    // restore stack length if we ever changed it (we shouldn't now, but safe)
+    while (rootStack.length > prev.stackLen) rootStack.pop();
+
+    // If previous tree existed, keep it; otherwise fall back to default root automatically
+    if (prev.tree) {
+      inspector.tree = prev.tree; // keep last good tree in memory
+    } else if (fallbackToDefault) {
+      // last resort: return home silently
+      try {
+        inspector.rootRef = defaultRoot;
+        inspector.options.name = defaultRootName;
+        inspector.parse({ name: defaultRootName, maxDepth });
+        currentRoot = defaultRoot;
+        currentRootName = defaultRootName;
+      } catch {}
+    }
+
+    // Re-render whatever state we have
+    expanded.clear();
+    expanded.add(currentRootName || "root");
+    renderCollapsibleTree();
+
+    // optional: show a small note instead of hard failure
+    setDetail?.({ error: `Cannot set root: ${String(err?.message || err)}` });
+
+    return false;
+  }
+}
+    
+    function setRoot_old2(newRoot, name = null, { pushHistory = true } = {}) {
 	if (!newRoot) return;
 
 	if (pushHistory && currentRoot && currentRoot !== newRoot) {
@@ -244,11 +329,11 @@ function openConsole(
 
 	expanded.clear();
 	expanded.add(currentRootName);
-
+	
 	renderCollapsibleTree(); // your tree render entry point
     }
     
-    function setRootold(newRoot, name = null) {
+    function setRoot_old1(newRoot, name = null) {
 	if (!newRoot) return;
 
 	currentRoot = newRoot;
