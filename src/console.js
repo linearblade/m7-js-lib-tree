@@ -604,16 +604,21 @@ function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault =
 	    </div>
 	    ` : ""}
 
-      ${Array.isArray(info.children) && info.children.length ? `
-            <div style="margin-top:10px;">
-            <div style="opacity:0.8; margin-bottom:6px;">children</div>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            ${info.children.slice(0, 60).map(c => `
-              <button =data-path="${escapeAttr(
-  (String(info.path || "").startsWith(currentRootName + ".") || String(info.path || "") === currentRootName)
-    ? (info.path + "." + c.name)
-    : (currentRootName + "." + c.name)
-)}"
+${info.children.slice(0, 60).map(c => {
+  const base =
+    (String(info.path || "") === currentRootName ||
+     String(info.path || "").startsWith(currentRootName + "."))
+      ? info.path
+      : currentRootName;
+
+  const childPath = `${base}.${c.name}`;
+
+  return `
+    <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
+      ${escapeHtml(iconFor(c.type))} ${escapeHtml(c.name)}
+    </button>
+  `;
+}).join("")}
               </button>
             `).join("")}
         </div>
