@@ -6,7 +6,7 @@
 // - inspect/find return stable absolute paths regardless of re-rooting UI
 import treeConsole from './console.js';
 
-export default class TreeInspector {
+ class TreeInspector {
   // ----------------------------
   // Static config / enrichers
   // ----------------------------
