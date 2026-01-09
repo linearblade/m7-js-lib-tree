@@ -80,13 +80,14 @@ function console(
     <div style="font-weight:700;">${escapeHtml(title)}</div>
 <button data-treeview title="tree view" style="${btnCss()}">🌳</button>
 <button data-setroot title="use input as root" style="${btnCss()}">🎯</button>
+    <button data-reparse style="${btnCss()}">↻</button>
 <input data-q placeholder="find… (name or path)" style="
   flex:1; min-width:200px; background: rgba(255,255,255,0.08); color:#fff;
   border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
   padding: 6px 8px; outline: none;
 "/>
 
-    <button data-reparse style="${btnCss()}">reparse</button>
+
     <button data-close style="${btnCss()}">×</button>
   </div>
 
