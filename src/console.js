@@ -130,15 +130,6 @@ function console(
 	disableToggle(el);
 	el.remove();
     };
-       const useRootBtn = detailEl.querySelector("[data-use-root]");
-    if (useRootBtn) {
-	useRootBtn.onclick = () => {
-	    // If they are inspecting a node, its ref is the value we want to re-root to.
-	    setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
-	};
-    }else {
-	alert('no use root btn');
-    }
  
     //el.querySelector("[data-close]").onclick = () => el.remove();
 
@@ -355,6 +346,15 @@ function console(
 	    ` : `<div style="opacity:0.7;">(no children)</div>`}
     `;
 
+	const useRootBtn = detailEl.querySelector("[data-use-root]");
+	if (useRootBtn) {
+	    useRootBtn.onclick = () => {
+		// If they are inspecting a node, its ref is the value we want to re-root to.
+		setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
+	    };
+	}
+
+	
 	// wire child chips
 	detailEl.querySelectorAll("button[data-path]").forEach(btn => {
 	    btn.onclick = () => showPath(btn.getAttribute("data-path"));
