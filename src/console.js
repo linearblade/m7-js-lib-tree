@@ -5,7 +5,7 @@ function install(cls) {
 }
 
 
-function console(
+function openConsole(
     lib,
     {
 	mount = document.body,
@@ -887,5 +887,5 @@ function console(
 
 
 
-export {install,console};
-export default {install,console};
+export {install,openConsole};
+export default {install,console:openConsole};

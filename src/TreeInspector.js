@@ -502,7 +502,7 @@ static formatScalar(value, maxLen = 140) {
 function factory(...args){
     return new TreeInspector(...args);
 }
-const openConsole = treeConsole.console;
+const openConsole = treeConsole.openConsole;
 treeConsole.install(TreeInspector);
 export { TreeInspector as cls, factory as inspector , openConsole};
 export default { cls: TreeInspector, inspector: factory , console:openConsole};
