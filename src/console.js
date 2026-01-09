@@ -37,6 +37,7 @@ function openConsole(
 
     let currentRoot     = lib;                 // whatever you initially opened with
     let currentRootName = inspector.tree?.name || "root"; // just for display / parse
+    let currentRootPath = currentRootName; // default, overridden when we know better
     const expanded      = new Set(); // paths that are expanded
     //backbutton / up 1 dir stuff
     const rootStack = []; // previous roots (values + labels)
@@ -229,87 +230,87 @@ function openConsole(
     
     // ----- root switching ----
 
-    function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault = true } = {}) {
-  if (newRoot == null) return false;
+    function setRoot(newRoot, name = null, { pushHistory = true, fallbackToDefault = true, path=null } = {}) {
+	if (newRoot == null) return false;
 
-  // reject scalars early (prevents "locked" roots)
-  const tt = typeof newRoot;
-  const rootable = newRoot && (tt === "object" || tt === "function");
-  if (!rootable) return false;
+	// reject scalars early (prevents "locked" roots)
+	const tt = typeof newRoot;
+	const rootable = newRoot && (tt === "object" || tt === "function");
+	if (!rootable) return false;
 
-  // snapshot current known-good state
-  const prev = {
-    root: currentRoot,
-    name: currentRootName,
-    tree: inspector.tree,
-    stackLen: rootStack.length,
-  };
+	// snapshot current known-good state
+	const prev = {
+	    root: currentRoot,
+	    name: currentRootName,
+	    tree: inspector.tree,
+	    stackLen: rootStack.length,
+	};
 
-  const nextName = (name ?? inferRootName(newRoot, { fallback: "root" })) || "root";
+	const nextName = (name ?? inferRootName(newRoot, { fallback: "root" })) || "root";
 
-  try {
-    // Attempt parse WITHOUT committing history/state yet
-    inspector.rootRef = newRoot;
-    inspector.options = inspector.options || {};
-    inspector.options.name = nextName;
+	try {
+	    // Attempt parse WITHOUT committing history/state yet
+	    inspector.rootRef = newRoot;
+	    inspector.options = inspector.options || {};
+	    inspector.options.name = nextName;
 
-    inspector.parse({ name: nextName, maxDepth });
+	    inspector.parse({ name: nextName, maxDepth });
 
-    // parse succeeded but still validate tree
-    if (!inspector.tree) throw new Error("parse produced null tree");
+	    // parse succeeded but still validate tree
+	    if (!inspector.tree) throw new Error("parse produced null tree");
 
-    // Commit history only after success
-    if (pushHistory && prev.root && prev.root !== newRoot) {
-      rootStack.push({ value: prev.root, label: prev.name });
+	    // Commit history only after success
+	    if (pushHistory && prev.root && prev.root !== newRoot) {
+		rootStack.push({ value: prev.root, label: prev.name });
+	    }
+
+	    // Commit current state
+	    currentRoot = newRoot;
+	    currentRootName = nextName;
+
+	    expanded.clear();
+	    expanded.add(currentRootName);
+
+	    renderCollapsibleTree();
+	    return true;
+
+	} catch (err) {
+	    // Revert to previous known-good state
+	    currentRoot = prev.root;
+	    currentRootName = prev.name;
+
+	    inspector.rootRef = prev.root;
+	    inspector.options = inspector.options || {};
+	    inspector.options.name = prev.name;
+
+	    // restore stack length if we ever changed it (we shouldn't now, but safe)
+	    while (rootStack.length > prev.stackLen) rootStack.pop();
+
+	    // If previous tree existed, keep it; otherwise fall back to default root automatically
+	    if (prev.tree) {
+		inspector.tree = prev.tree; // keep last good tree in memory
+	    } else if (fallbackToDefault) {
+		// last resort: return home silently
+		try {
+		    inspector.rootRef = defaultRoot;
+		    inspector.options.name = defaultRootName;
+		    inspector.parse({ name: defaultRootName, maxDepth });
+		    currentRoot = defaultRoot;
+		    currentRootName = defaultRootName;
+		} catch {}
+	    }
+
+	    // Re-render whatever state we have
+	    expanded.clear();
+	    expanded.add(currentRootName || "root");
+	    renderCollapsibleTree();
+
+	    // optional: show a small note instead of hard failure
+	    setDetail?.({ error: `Cannot set root: ${String(err?.message || err)}` });
+
+	    return false;
+	}
     }
-
-    // Commit current state
-    currentRoot = newRoot;
-    currentRootName = nextName;
-
-    expanded.clear();
-    expanded.add(currentRootName);
-
-    renderCollapsibleTree();
-    return true;
-
-  } catch (err) {
-    // Revert to previous known-good state
-    currentRoot = prev.root;
-    currentRootName = prev.name;
-
-    inspector.rootRef = prev.root;
-    inspector.options = inspector.options || {};
-    inspector.options.name = prev.name;
-
-    // restore stack length if we ever changed it (we shouldn't now, but safe)
-    while (rootStack.length > prev.stackLen) rootStack.pop();
-
-    // If previous tree existed, keep it; otherwise fall back to default root automatically
-    if (prev.tree) {
-      inspector.tree = prev.tree; // keep last good tree in memory
-    } else if (fallbackToDefault) {
-      // last resort: return home silently
-      try {
-        inspector.rootRef = defaultRoot;
-        inspector.options.name = defaultRootName;
-        inspector.parse({ name: defaultRootName, maxDepth });
-        currentRoot = defaultRoot;
-        currentRootName = defaultRootName;
-      } catch {}
-    }
-
-    // Re-render whatever state we have
-    expanded.clear();
-    expanded.add(currentRootName || "root");
-    renderCollapsibleTree();
-
-    // optional: show a small note instead of hard failure
-    setDetail?.({ error: `Cannot set root: ${String(err?.message || err)}` });
-
-    return false;
-  }
-}
     
     function setRoot_old2(newRoot, name = null, { pushHistory = true } = {}) {
 	if (!newRoot) return;
@@ -530,7 +531,7 @@ function openConsole(
 	if (useRootBtn) {
 	    useRootBtn.onclick = () => {
 		// If they are inspecting a node, its ref is the value we want to re-root to.
-		setRoot(info.ref, info.name); // name becomes the last segment (e.g., "lib")
+		setRoot(info.ref, info.name, {path:info.path}); // name becomes the last segment (e.g., "lib")
 	    };
 	}
 	const upRootBtn = detailEl.querySelector("[data-up-root]");
