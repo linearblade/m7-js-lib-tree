@@ -1,4 +1,33 @@
 // detail.js
+
+function derefNode(node){
+    if (node?.type !== "ref" && node.ref === null) {
+	return node;
+	
+	const canonical = this._findByRef(node.ref);
+	if (canonical?.node && canonical.node !== node) {
+	    viewNode = canonical.node;
+	    refPath = canonical.path; // canonical absolute path
+	}
+
+
+	const payload = {
+	    type: viewNode.type,
+	    name: viewNode.name,
+	    path,                         // keep clicked path
+	    refPath: refPath || null,     // where the “real” node is
+	    signature: viewNode.signature ?? null,
+	    parentPath: parent ? parent.path : null,
+	    childCount: Array.isArray(viewNode.children) ? viewNode.children.length : 0,
+	    childrenPreview: Array.isArray(viewNode.children)
+		? viewNode.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
+		: [],
+	};
+	
+	if (includeChildren) payload.children = viewNode.children || [];
+	if (includeRef) payload.ref = viewNode.ref;
+	return payload;
+}
 /**
  * detail.js
  * Renders the right-side detail panel and wires local interactions.
@@ -23,6 +52,9 @@ function setDetail(ctx, info) {
     const { detailEl } = ctx;
     const { iconFor, chipCss, escapeHtml, escapeAttr } = ctx.lib.helpers;
 
+    info = derefNode(info);
+
+    
   if (info?.error) {
     detailEl.innerHTML = `<div style="color:#ffb3b3;">${escapeHtml(info.error)}</div>`;
     return;
