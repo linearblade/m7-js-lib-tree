@@ -674,7 +674,7 @@ class TreeInspector {
 
 		
 	    }
-	    path = typeof target === 'string'? target:viewNode:path;
+	    path = typeof target === 'string'? target:viewNode.path;
 	}else {
 	    path = node.path;
 	}
