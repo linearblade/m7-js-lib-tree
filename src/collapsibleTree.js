@@ -49,7 +49,7 @@ function renderCollapsibleTree(
      </span>
      -->
      <span style="opacity:0.7; margin-left:6px;">
-       stem: <span style="opacity:1; font-weight:700;">${escapeHtml(stem || "")}</span>
+       <!--stem:--><span style="opacity:1; font-weight:700;">${escapeHtml(stem || "")}</span>
      </span>
 
      <button data-expandall style="${chipCss()}">expand all</button>
