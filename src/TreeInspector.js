@@ -405,8 +405,54 @@ class TreeInspector {
 
 	node.children = [];
 
-	
 	if (type === "class") {
+  const entries = this._classChildren(node, {
+    includeNonEnumerable,
+    // any other knobs you want to pass through
+  });
+
+  for (const entry of entries) {
+    const k = entry.name;
+    const v = entry.ref;
+
+    // Special: ensure prototype branch includes non-enumerables (class methods are non-enumerable)
+    const forceNonEnum =
+      entry && entry.name === "prototype" && entry.type === "hash";
+
+    const childNode = this._parseNode({
+      value: v,
+      name: k,
+      pathParts: pathParts.concat([k]),
+      parentPath: path,
+      depth: depth + 1,
+      seen,
+      maxDepth,
+      includeNonEnumerable: forceNonEnum ? true : includeNonEnumerable,
+      includeClasses,
+    });
+
+    // Preserve/enrich metadata coming from ClassInspector
+    if (entry && typeof entry === "object") {
+      // keep any flags like isStatic, ownerKind, synthetic...
+      for (const metaKey of Object.keys(entry)) {
+        if (metaKey === "children") continue; // TreeInspector owns children
+        if (metaKey === "ref") continue;      // TreeInspector owns ref
+        if (metaKey === "path") continue;     // TreeInspector owns path
+        if (metaKey === "pathParts") continue;
+        if (metaKey === "parentPath") continue;
+        if (metaKey === "depth") continue;
+        if (metaKey === "name") continue;
+        if (metaKey === "type") continue;     // TreeInspector may compute type
+        childNode[metaKey] = entry[metaKey];
+      }
+    }
+
+    node.children.push(childNode);
+  }
+
+  return node;
+}
+	if (0 &&type === "class") {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
 	    const entries = this._classChildren(node, {
