@@ -304,7 +304,7 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
 }
 
 
-appendTreeNavTop(ctx, rootPath, ul){
+function appendTreeNavTop(ctx, rootPath, ul){
     // --- "up one dir" row (../ + parent path as text) ---
 
 
