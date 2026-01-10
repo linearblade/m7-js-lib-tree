@@ -300,7 +300,7 @@ class TreeInspector {
 	const rootName  = rootParts[rootParts.length - 1] ?? this.options.hint;
 
 	const seen = new WeakMap(); // obj -> canonical node (cycle/shared refs)
-
+	console.log('include classes = ',includeClasses);
 	const rootNode = this._parseNode({
 	    value: this.rootRef,
 	    name: rootName,
