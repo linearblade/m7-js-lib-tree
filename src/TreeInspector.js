@@ -348,7 +348,7 @@ class TreeInspector {
 	      type === "hash" ||
 	      type === "array" ||
 	      (includeClasses && type === "class");
-
+	console.log('is branch', isBranch,includeClasses, type);
 	const isRefable = (value && (t === "object" || t === "function")); // ok
 	const path = pathParts.join(".");
 
