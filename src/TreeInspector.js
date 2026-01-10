@@ -663,13 +663,7 @@ class TreeInspector {
 	if (!node) return null;
 
 	//get canonical path for references. console can figure it out.
-	const canonicalPath = node.path;
-	if (node?.type === "ref" && node.ref != null) {
-	    const canonical = this._findByRef(node.ref);
-	    if (canonical && canonical.node !== node)
-		canonicalPath = canonical.path;
-	}
-	
+	const canonicalPath = this.getCanonicalPath(node);
 	const payload = {
 	    type: node.type,
 	    name: node.name,
@@ -700,6 +694,18 @@ class TreeInspector {
 	return payload;
     }
 
+    getCanonicalPath(node){
+	if (!node) return null;
+	
+	if (node.type !== "ref" || node.ref == null)
+	    return node.path;
+	
+	const canonical = this._findByRef(node.ref);
+	return  (canonical && canonical.node !== node) ?
+	    canonical.path:
+	    node.path;
+    }
+    
     _normalizePath(p) {
 	const s = String(p ?? "").trim().replace(/^\.+|\.+$/g, "");
 	if (!s) return this.tree?.path ?? this._absRootPath ?? this.options.hint;
