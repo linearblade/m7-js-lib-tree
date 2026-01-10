@@ -667,13 +667,12 @@ class TreeInspector {
 	let refPath = null;
 	let path = null;
 	if (node?.type === "ref" && node.ref != null) {
+	    console.log('try deref');
 	    const canonical = this._findByRef(node.ref);
-	    if (canonical?.node && canonical.node !== node) {
-		viewNode = canonical.node;
-		refPath = canonical.path; // canonical absolute path
-
-		
-	    }
+	    if (!canonical || canonical.node === node) return null;
+	    
+	    viewNode = canonical.node;
+	    refPath = canonical.path; // canonical absolute path
 	    path = typeof target === 'string'? target:viewNode.path;
 	}else {
 	    path = node.path;
