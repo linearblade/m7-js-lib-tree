@@ -58,12 +58,71 @@ export const ClassInspectorTraits = {
 	return isClassDefinition(ref);
     },
 
+
+    // ---- TreeInspector hook: expand class node children ----
+//
+// Desired shape:
+//   MyClass
+//     - y              (static)
+//     - static_method  (static)
+//     - prototype
+//         - instance_method
+//
+_classChildren(node, { includeSymbols = true, skipBuiltins = true } = {}) {
+  const Ctor = node?.ref;
+  if (!isClassDefinition(Ctor)) return [];
+
+  const out = [];
+
+  // --- statics on the ctor (addressable: <ClassPath>.<key>) ---
+  for (const key of getOwnKeys(Ctor, { includeSymbols })) {
+    const name = typeof key === "symbol" ? key.toString() : String(key);
+    if (shouldSkipKey(name, { skipBuiltins })) continue;
+
+    const desc = Object.getOwnPropertyDescriptor(Ctor, key);
+    const type = typeFromDescriptor(desc);
+
+    const childPath = `${node.path}.${name}`;
+
+    out.push({
+      type,
+      name,
+      ref: desc?.value, // accessors => undefined here (ok)
+      path: childPath,
+      pathParts: childPath.split("."),
+      parentPath: node.path,
+      depth: node.depth + 1,
+      synthetic: true,      // derived via reflection
+      isStatic: true,       // <- enrichment you asked for
+      ownerKind: "static",  // optional, useful in UI later
+    });
+  }
+
+  // --- prototype folder (addressable: <ClassPath>.prototype.<key>) ---
+  const protoPath = `${node.path}.prototype`;
+  const protoFolder = {
+    type: "hash",
+    name: "prototype",
+    ref: Ctor.prototype,
+    path: protoPath,
+    pathParts: protoPath.split("."),
+    parentPath: node.path,
+    depth: node.depth + 1,
+    synthetic: true,
+    isPrototype: true,
+    // children are filled by TreeInspector's normal object parsing (with non-enum enabled in TreeInspector.js patch)
+  };
+
+  out.push(protoFolder);
+  return out;
+},
+    
     // ---- TreeInspector hook: expand class node children ----
     //
     // Returns an array of "child nodes" in the TreeInspector node format:
     // { type, name, path, pathParts, parentPath, depth, ref, children?, synthetic? }
     //
-    _classChildren(node, { includeSymbols = true, skipBuiltins = false } = {}) {
+    _oldclassChildren(node, { includeSymbols = true, skipBuiltins = false } = {}) {
 	const Ctor = node?.ref;
 	console.log('IN CLASS CHILDREN',node,Ctor);
 	if (!isClassDefinition(Ctor)) return [];
