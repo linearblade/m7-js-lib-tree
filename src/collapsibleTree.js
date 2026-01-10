@@ -77,8 +77,8 @@ function renderCollapsibleTree(
     while (stack.length && count < maxNodes) {
 	const { node, path, depth } = stack.pop();
 	count++;
-
-	const isBranch = !!node && (node.type === "hash" || node.type === "array" || node.type==="class");
+	const isBranch = isBranchNode(node);
+	//const isBranch = !!node && (node.type === "hash" || node.type === "array");
 	const isOpen = isBranch && expanded.has(path);
 	const kids = node?.children || [];
 
@@ -205,8 +205,8 @@ function expandAllUnder(ctx, node, path, limit = 5000) {
     while (stack.length && count < limit) {
 	const cur = stack.pop();
 	if (!cur?.node) continue;
-
-	const isBranch = cur.node.type === "hash" || cur.node.type === "array";
+	const isBranch = isBranchNode(node);
+	//const isBranch = cur.node.type === "hash" || cur.node.type === "array";
 	if (!isBranch) continue;
 
 	expanded.add(cur.path);
@@ -225,7 +225,8 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
     const { escapeHtml, chipCss, iconFor} = ctx.lib.helpers;
     const { expanded } = ctx;
 
-    const isBranch = !!node && (node.type === "hash" || node.type === "array");
+    const isBranch = isBranchNode(node);
+    //const isBranch = !!node && (node.type === "hash" || node.type === "array");
     const isOpen = isBranch && expanded.has(path);
 
     const li = document.createElement("li");
@@ -350,6 +351,12 @@ function appendTreeNavTop(ctx, rootPath, ul){
 
 	ul.appendChild(liUp);
 
+}
+
+// helper (local)
+function isBranchNode(node) {
+    if (!node) return false;
+    return node.type === "hash" || node.type === "array" || node.type === "class";
 }
 
 export { renderCollapsibleTree,renderNodeLine };
