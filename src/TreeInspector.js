@@ -410,7 +410,7 @@ class TreeInspector {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
 	    const entries = this._classChildren(node, {
-		includeNonEnumerable,
+		includeNonEnumerable:true,
 		// any other knobs you want to pass through
 	    });
 	    console.log('in class diver, checking...');
