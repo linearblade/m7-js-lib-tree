@@ -182,6 +182,7 @@ function synthetic_inspectAndShow(ctx, path) {
     }
 
     // Class expansion hook (class defs + class-like functions)
+    if (0) { //disable
     if (info.ref) {
 	const isClass =
 	      info.type === "class" ||
@@ -194,6 +195,7 @@ function synthetic_inspectAndShow(ctx, path) {
 		skipBuiltins: false,
 	    });
 	}
+    }
     }
 
     setDetail(ctx, info);
