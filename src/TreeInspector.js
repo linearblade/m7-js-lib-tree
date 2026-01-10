@@ -413,6 +413,17 @@ class TreeInspector {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
+	    // entries are already nodes
+	    node.children = entries;
+
+	    // IMPORTANT: index children manually
+	    for (const child of entries) {
+		this._indexNode(child);
+	    }
+
+	    return node;
+	    /*
+	    node.children.push(...entries);
 	    console.log('in class diver, checking...',entries);
 	    for (const { name: k, value: v } of entries) {
 		node.children.push(
@@ -430,7 +441,7 @@ class TreeInspector {
 		);
 	    }
 	    console.log(node);
-	    return node;
+	    return node;*/
 	}
 
 	// existing hash/array behavior
