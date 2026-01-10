@@ -662,13 +662,13 @@ class TreeInspector {
 
 	if (!node) return null;
 
-	// If you clicked a ref node (shared/cycle), deref it to the canonical node for display.
-	canonicalPath = node.path;
+	//get canonical path for references. console can figure it out.
+	const canonicalPath = node.path;
 	if (node?.type === "ref" && node.ref != null) {
 	    const canonical = this._findByRef(node.ref);
 	    if (canonical && canonical.node !== node)
 		canonicalPath = canonical.path;
-
+	}
 	
 	const payload = {
 	    type: node.type,
