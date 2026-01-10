@@ -168,6 +168,29 @@ function isInspectableClass(ref, { allowConstructorFunctions = true } = {}) {
  * - the prototype object
  */
 function getSyntheticRoots(ctx, { classRef, classPath }) {
+  if (!ctx) throw new Error("[classInspector.getSyntheticRoots] ctx required");
+  if (!isFn(classRef)) throw new Error("[classInspector.getSyntheticRoots] classRef must be function");
+  if (!classPath) throw new Error("[classInspector.getSyntheticRoots] classPath required");
+
+  const protoPath = `${classPath}.prototype`;
+
+  return [
+    {
+      type: "hash",
+      name: "prototype",
+      ref: classRef.prototype,
+      path: protoPath,
+      pathParts: protoPath.split("."),
+      parentPath: classPath,
+      depth: null,
+      children: [],
+      synthetic: true,
+      isPrototype: true,
+    },
+  ];
+}
+/*
+function getSyntheticRoots(ctx, { classRef, classPath }) {
     if (!ctx) throw new Error("[classInspector.getSyntheticRoots] ctx required");
     if (!isFn(classRef)) throw new Error("[classInspector.getSyntheticRoots] classRef must be function");
     if (!classPath) throw new Error("[classInspector.getSyntheticRoots] classPath required");
@@ -200,7 +223,7 @@ function getSyntheticRoots(ctx, { classRef, classPath }) {
 	},
     ];
 }
-
+*/
 /**
  * Enumerate members of:
  * - the class itself (static)
@@ -324,6 +347,62 @@ function enumerateMembers(ctx, {
  * Output:
  * - newInfo: same object (cloned shallow) with children[] filled (synthetic)
  */
+
+
+
+
+function expandClassInfo(ctx, info, opts = {}) {
+    if (!ctx) throw new Error("[classInspector.expandClassInfo] ctx required");
+    if (!info) throw new Error("[classInspector.expandClassInfo] info required");
+
+    const classRef = info.ref;
+    const classPath = info.path;
+
+    if (!isInspectableClass(classRef, opts)) {
+	// return as-is if not treatable
+	return info;
+    }
+
+    const includeSymbols = opts.includeSymbols ?? true;
+    const skipBuiltins = opts.skipBuiltins ?? false; // you said "get it all" for now
+
+    // 1) enumerate statics directly under the class path
+const staticMembers = enumerateMembers(ctx, {
+  ownerRef: classRef,
+  ownerPath: classPath,       // <- direct
+  includeSymbols,
+  skipBuiltins,
+  kind: "static",
+}).map((n) => ({ ...n, isStatic: true }));
+
+// 2) prototype root container
+const [protoRoot] = getSyntheticRoots(ctx, { classRef, classPath });
+
+const protoMembers = enumerateMembers(ctx, {
+  ownerRef: classRef.prototype,
+  ownerPath: protoRoot.path,
+  includeSymbols,
+  skipBuiltins,
+  kind: "prototype",
+});
+
+protoRoot.children = protoMembers;
+
+// 3) attach to info
+const out = { ...info };
+out.children = [...staticMembers, protoRoot];
+out.childCount = out.children.length;
+
+out.classInspector = {
+  synthetic: true,
+  staticCount: staticMembers.length,
+  protoCount: protoMembers.length,
+};
+
+return out;
+}
+/*
+  
 function expandClassInfo(ctx, info, opts = {}) {
     if (!ctx) throw new Error("[classInspector.expandClassInfo] ctx required");
     if (!info) throw new Error("[classInspector.expandClassInfo] info required");
@@ -375,7 +454,8 @@ function expandClassInfo(ctx, info, opts = {}) {
     };
 
     return out;
-}
+    }
+    */
 
 export {
     isInspectableClass,
