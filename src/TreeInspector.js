@@ -652,7 +652,7 @@ class TreeInspector {
 	}
 
 	let node = null;
-
+	
 	if (typeof target === "string") {
 	    const normalized = this._normalizePath(target);
 	    node = this.index.byPath.get(normalized) || null;
@@ -665,7 +665,7 @@ class TreeInspector {
 	// If you clicked a ref node (shared/cycle), deref it to the canonical node for display.
 	let viewNode = node;
 	let refPath = null;
-
+	let path = null;
 	if (node?.type === "ref" && node.ref != null) {
 	    const canonical = this._findByRef(node.ref);
 	    if (canonical?.node && canonical.node !== node) {
@@ -674,8 +674,9 @@ class TreeInspector {
 
 		
 	    }
-
-	    
+	    path = typeof target === 'string'? target:viewNode:path;
+	}else {
+	    path = node.path;
 	}
 
 	const payload = {
