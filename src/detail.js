@@ -126,8 +126,9 @@ function setDetail(ctx, info) {
   wireDetailEvents(ctx, info);
 }
 
+
 // ----------------------------
-// Local inspect helper
+// Local inspect helper (detail.js local)
 // ----------------------------
 function inspectAndShow(ctx, path) {
   const p = String(path || "").trim();
@@ -136,7 +137,7 @@ function inspectAndShow(ctx, path) {
     return false;
   }
 
-  const info = ctx.inspector.inspect(p, {
+  let info = ctx.inspector.inspect(p, {
     includeRef: true,
     includeChildren: true,
     show: false,
@@ -147,8 +148,59 @@ function inspectAndShow(ctx, path) {
     return false;
   }
 
+  // Class expansion hook (class defs + class-like functions)
+  if (info.ref) {
+    const isClass =
+      info.type === "class" ||
+      (info.type === "function" &&
+        ctx.lib.class_inspector.isInspectableClass(info.ref));
+
+    if (isClass) {
+      info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
+        includeSymbols: true,
+        skipBuiltins: false,
+      });
+    }
+  }
+
   setDetail(ctx, info);
   return true;
+}
+
+// ----------------------------
+// Local inspect helper
+// ----------------------------
+function oldinspectAndShow(ctx, path) {
+    const p = String(path || "").trim();
+    if (!p) {
+	setDetail(ctx, { error: "Not found: (empty path)" });
+	return false;
+    }
+    /*
+      const info = ctx.inspector.inspect(p, {
+      includeRef: true,
+      includeChildren: true,
+      show: false,
+      });*/
+    let info = ctx.inspector.inspect(p, { includeRef:true, includeChildren:true, show:false });
+
+    if (info && (info.type === "class" || (info.type === "function" && ctx.lib.class_inspector.isInspectableClass(info.ref)))) {
+	info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
+	    includeSymbols: true,
+	    skipBuiltins: false, // “get it all”
+	});
+    }
+
+    ctx.lib.detail.set(ctx, info);
+    
+
+    if (!info) {
+	setDetail(ctx, { error: `Not found: ${p}` });
+	return false;
+    }
+
+    setDetail(ctx, info);
+    return true;
 }
 
 // ----------------------------

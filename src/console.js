@@ -8,6 +8,7 @@ import dom        from "./dom.js";             // cleaned
 import finder     from "./finder.js";          // cleaned
 import path       from "./path.js";            // cleaned
 import toggle     from "./toggle.js";          // cleaned
+import class_inspector     from "./ClassInspector.js";  // cleaned
 
 let TreeInspector = null;
 
@@ -29,6 +30,7 @@ function installLibs(ctx = {}) {
 	finder,
 	path,
 	toggle,
+	class_inspector
     });
 
     return ctx;
