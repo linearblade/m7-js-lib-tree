@@ -274,7 +274,8 @@ function wireDetailEvents(ctx, info) {
 
 	const inRoot = (up === root) || up.startsWith(root + ".");
 	if (!inRoot) {
-	    setDetail(ctx, { note: `At root: ${root}` }); // or { error: ... } if you prefer
+	    alert('already at root');
+	    //setDetail(ctx, { note: `At root: ${root}` }); 
 	    return;
 	}
 
