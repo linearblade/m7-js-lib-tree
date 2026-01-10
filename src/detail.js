@@ -49,23 +49,29 @@ function setDetail(ctx, info) {
     detailEl.innerHTML = `
     <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
 
-    ${
-      showCanonical
-        ? `
-      <div style="
-        margin: 8px 0 10px;
-        padding: 8px;
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 10px;
-        background: rgba(255,255,255,0.05);
-      ">
-        <div style="opacity:0.8; margin-bottom:6px;">points to</div>
-        <div style="white-space:pre-wrap;">${escapeHtml(canonicalPath)}</div>
-      </div>
-      `
-        : ""
-    }
+${
+  showCanonical
+    ? `
+  <div style="
+    margin: 8px 0 10px;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+  ">
+    <div style="opacity:0.8; margin-bottom:6px;">points to</div>
+    <button
+      data-canonical-path="${escapeAttr(canonicalPath)}"
+      style="${chipCss()}"
+    >
+      ${escapeHtml(canonicalPath)}
+    </button>
+  </div>
+  `
+    : ""
+}
 
+ 
     <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
       <div style="font-size:18px;">${icon}</div>
       <div>
@@ -257,6 +263,16 @@ function wireDetailEvents(ctx, info) {
     detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
 	btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
     });
+
+    //  canonical ref jump
+    const canonicalBtn = detailEl.querySelector("[data-canonical-path]");
+    if (canonicalBtn) {
+	canonicalBtn.onclick = () => {
+	    const p = canonicalBtn.getAttribute("data-canonical-path");
+	    if (p) inspectAndShow(ctx, p);
+	};
+    }
+    
 }
 
 export { setDetail as set };
