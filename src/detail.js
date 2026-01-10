@@ -130,7 +130,7 @@ function setDetail(ctx, info) {
 // ----------------------------
 // Local inspect helper (detail.js local)
 // ----------------------------
-function inspectAndShow(ctx, path) {
+function synthetic_inspectAndShow(ctx, path) {
   const p = String(path || "").trim();
   if (!p) {
     setDetail(ctx, { error: "Not found: (empty path)" });
@@ -170,7 +170,7 @@ function inspectAndShow(ctx, path) {
 // ----------------------------
 // Local inspect helper
 // ----------------------------
-function oldinspectAndShow(ctx, path) {
+function inspectAndShow(ctx, path) {
     const p = String(path || "").trim();
     if (!p) {
 	setDetail(ctx, { error: "Not found: (empty path)" });
