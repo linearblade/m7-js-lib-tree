@@ -413,7 +413,7 @@ class TreeInspector {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
-
+	    console.log('got this', entries);
 	    for (const entry of entries) {
 		//coerce into something digestible.
 		const k = entry.name;
