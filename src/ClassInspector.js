@@ -148,7 +148,12 @@ export const ClassInspectorTraits = {
 	    }
 	}
 
-	out.push(staticsFolder, protoFolder);
+	
+	//out.push(staticsFolder, protoFolder);
+	out.push(protoFolder);
+	for (const item of staticsFolder.children){
+	    out.push(item);
+	}
 	return out;
     },
 };
