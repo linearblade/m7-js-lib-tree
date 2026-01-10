@@ -302,7 +302,7 @@ class TreeInspector {
 	const rootName  = rootParts[rootParts.length - 1] ?? this.options.hint;
 
 	const seen = new WeakMap(); // obj -> canonical node (cycle/shared refs)
-	console.log('include classes = ',includeClasses);
+	//console.log('include classes = ',includeClasses);
 	const rootNode = this._parseNode({
 	    value: this.rootRef,
 	    name: rootName,
@@ -351,7 +351,7 @@ class TreeInspector {
 	      type === "hash" ||
 	      type === "array" ||
 	      (includeClasses && type === "class");
-	console.log('is branch', isBranch,includeClasses, type);
+	//console.log('is branch', isBranch,includeClasses, type);
 	const isRefable = (value && (t === "object" || t === "function")); // ok
 	const path = pathParts.join(".");
 
@@ -410,7 +410,7 @@ class TreeInspector {
     includeNonEnumerable,
     // any other knobs you want to pass through
   });
-
+	    console.log('got this', entries);
   for (const entry of entries) {
     const k = entry.name;
     const v = entry.ref;
@@ -459,7 +459,7 @@ class TreeInspector {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
-	    console.log('got this', entries);
+	    //console.log('got this', entries);
 	    for (const entry of entries) {
 		//coerce into something digestible.
 		const k = entry.name;
