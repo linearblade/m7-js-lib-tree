@@ -54,6 +54,7 @@ class TreeInspector {
 	    // parse depth cap
 	    maxDepth = Infinity,
 	    includeClasses = true,
+	    includeNonEnumerable = false,
 	    ...rest
 	} = options;
 
@@ -280,7 +281,8 @@ class TreeInspector {
     parse({
 	value = this.rootRef,
 	maxDepth = this.options.maxDepth,
-	includeClasses = this.options.includeClasses
+	includeClasses = this.options.includeClasses,
+	includeNonEnumerable = this.options.includeNonEnumerable
     } = {}) {
 	// flush
 	this.tree = null;
@@ -309,7 +311,8 @@ class TreeInspector {
 	    depth: 0,
 	    seen,
 	    maxDepth,
-	    includeClasses
+	    includeClasses,
+	    includeNonEnumerable,
 	});
 
 	this.tree = rootNode;
