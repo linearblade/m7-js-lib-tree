@@ -22,7 +22,9 @@ function renderCollapsibleTree(
 ) {
     const { treeEl, expanded } = ctx;
     const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
+    const { parentPathOf, leafNameOf, goUpOne } = ctx.lib.path;
 
+    
     treeEl.innerHTML = "";
 
     if (!root) {
@@ -32,6 +34,7 @@ function renderCollapsibleTree(
 
     // Absolute expansion key (fallback to name only if needed)
     const rootPath = root.path || root.name;
+    const stem       = leafNameOf(rootPath);
     if (expandRoot && rootPath) expanded.add(rootPath);
 
     const head = document.createElement("div");
@@ -39,19 +42,33 @@ function renderCollapsibleTree(
 	"margin-bottom:8px; opacity:0.9; display:flex; gap:8px; align-items:center;";
 
     head.innerHTML = `
+     <span style="opacity:0.9;">
+       root:
+       <span style="opacity:1; font-weight:700;">${escapeHtml(rootPath)}</span>
+     </span>
+
+     <span style="opacity:0.7; margin-left:6px;">
+       stem: <span style="opacity:1; font-weight:700;">${escapeHtml(stem || "")}</span>
+     </span>
+
+     <button data-expandall style="${chipCss()}">expand all</button>
+     <button data-collapseall style="${chipCss()}">collapse all</button>
+   `;
+   /* 
+    head.innerHTML = `
     <span style="opacity:0.9;">
       root: <span style="opacity:1; font-weight:700;">${escapeHtml(rootPath)}</span>
     </span>
     <button data-expandall style="${chipCss()}">expand all</button>
     <button data-collapseall style="${chipCss()}">collapse all</button>
   `;
-
+   */
     treeEl.appendChild(head);
 
     const ul = document.createElement("ul");
     ul.style.cssText = "list-style:none; padding-left: 0; margin:0;";
     treeEl.appendChild(ul);
-
+    appendTreeNavTop(ctx, rootPath, ul);
     // DFS; paths are absolute now (node.path)
     const stack = [{ node: root, path: rootPath, depth: 0 }];
     let count = 0;
@@ -284,6 +301,54 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
     }
 
     return li;
+}
+
+
+appendTreeNavTop(ctx, rootPath, ul){
+    // --- "up one dir" row (../ + parent path as text) ---
+
+
+    const parentPath = ctx.lib.path.parentPathOf(rootPath); // "abs path minus stem"
+    if(!parentPath) return;
+
+	const liUp = document.createElement("li");
+	liUp.style.cssText = `
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding: 4px 6px;
+        border-radius: 8px;
+        user-select: none;
+        color: yellow;
+        opacity: 0.95;
+        `;
+
+	const upBtn = document.createElement("span");
+	upBtn.style.cssText = `
+          cursor: pointer;
+         font-weight: 700;
+        `;
+	upBtn.textContent = "../";
+	upBtn.onclick = (e) => {
+	    e.stopPropagation();
+	    ctx.lib.path.goUpOne(ctx);                  // path-based navigation
+	    // NOTE: goUpOne should call setRootFromInput which re-renders already.
+	    // If not, you can force:
+	    // renderCollapsibleTree(ctx, { expandRoot: true });
+	};
+
+	const upText = document.createElement("span");
+	upText.style.cssText = "opacity:0.65;";
+	upText.textContent = parentPath;
+
+	liUp.appendChild(upBtn);
+	liUp.appendChild(upText);
+
+	liUp.onmouseenter = () => (liUp.style.background = "rgba(255,255,255,0.08)");
+	liUp.onmouseleave = () => (liUp.style.background = "transparent");
+
+	ul.appendChild(liUp);
+
 }
 
 export { renderCollapsibleTree,renderNodeLine };
