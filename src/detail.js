@@ -218,14 +218,14 @@ function inspectAndShow(ctx, path) {
       show: false,
       });*/
     let info = ctx.inspector.inspect(p, { includeRef:true, includeChildren:true, show:false });
-
+    /*
     if (info && (info.type === "class" || (info.type === "function" && ctx.lib.class_inspector.isInspectableClass(info.ref)))) {
 	info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
 	    includeSymbols: true,
 	    skipBuiltins: false, // “get it all”
 	});
     }
-
+    */
     ctx.lib.detail.set(ctx, info);
     
 
