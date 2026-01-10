@@ -1,0 +1,184 @@
+// detail.js
+/**
+ * detail.js
+ * Renders the right-side detail panel and wires local interactions.
+ *
+ * HARD expectations (ctx):
+ * - ctx.detailEl: HTMLElement
+ * - ctx.inspector: TreeInspector instance
+ * - ctx.lib.helpers: { iconFor, chipCss, escapeHtml, escapeAttr }
+ * - ctx.lib.root.setRootFromInput(ctx, absPathString): boolean
+ * - ctx.lib.path.goUpOne(ctx): boolean (optional; if missing, ../ is hidden)
+ *
+ * Notes:
+ * - info.path is expected to be ABSOLUTE (TreeInspector provides it).
+ * - child chips prefer child.path, else `${info.path}.${child.name}`.
+ */
+
+// ----------------------------
+// Main
+// ----------------------------
+function setDetail(ctx, info) {
+
+    const { detailEl } = ctx;
+    const { iconFor, chipCss, escapeHtml, escapeAttr } = ctx.lib.helpers;
+
+  if (info?.error) {
+    detailEl.innerHTML = `<div style="color:#ffb3b3;">${escapeHtml(info.error)}</div>`;
+    return;
+  }
+
+  if (info?.note) {
+    detailEl.innerHTML = `<div style="opacity:0.9;">${escapeHtml(info.note)}</div>`;
+    return;
+  }
+
+  const icon = iconFor(ctx, info.type);
+  const sig = info.signature;
+
+  detailEl.innerHTML = `
+    <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
+
+    <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+      <div style="font-size:18px;">${icon}</div>
+      <div>
+        <div style="font-weight:700;">${escapeHtml(info.name)}</div>
+        <div style="opacity:0.75;">
+          type: ${escapeHtml(info.type)}
+          ${info.childCount ? ` • children: ${info.childCount}` : ""}
+        </div>
+      </div>
+
+      <button data-up-root style="${chipCss()}">../</button>
+      ${
+        info?.ref && (info.type === "hash" || info.type === "array")
+          ? `<button data-use-root style="${chipCss()}">🎯</button>`
+          : ""
+      }
+    </div>
+
+    ${
+      sig
+        ? `
+      <div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
+        <div style="opacity:0.8; margin-bottom:6px;">signature</div>
+        <div><b>${escapeHtml(sig.name || "(anonymous)")}</b> (${escapeHtml(
+            (sig.params || []).join(", ")
+          )})</div>
+        <div style="opacity:0.75;">arity: ${sig.arity}${sig.isNative ? " • native" : ""}</div>
+      </div>
+    `
+        : ""
+    }
+
+    ${
+      sig?.sourcePreview
+        ? `
+      <div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
+        <div style="opacity:0.8; margin-bottom:6px;">source preview</div>
+        <pre style="white-space:pre-wrap; margin:0;">${escapeHtml(sig.sourcePreview)}</pre>
+      </div>
+    `
+        : ""
+    }
+
+    ${
+      info?.valuePreview
+        ? `
+      <div style="
+        margin:10px 0;
+        padding:8px;
+        border:1px solid rgba(255,255,255,0.12);
+        border-radius:10px;
+        background:rgba(255,255,255,0.05);
+      ">
+        <div style="opacity:0.8; margin-bottom:6px;">value</div>
+        <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
+      </div>
+    `
+        : ""
+    }
+
+    ${
+      Array.isArray(info.children) && info.children.length
+        ? `
+      <div style="margin-top:10px;">
+        <div style="opacity:0.8; margin-bottom:6px;">children</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          ${info.children
+            .slice(0, 60)
+            .map((c) => {
+              const childPath = c?.path || `${info.path}.${c.name}`;
+              return `
+                <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
+                  ${escapeHtml(iconFor(ctx, c.type))} ${escapeHtml(c.name)}
+                </button>
+              `;
+            })
+            .join("")}
+        </div>
+      </div>
+    `
+        : `<div style="opacity:0.7;">(no children)</div>`
+    }
+  `;
+
+  wireDetailEvents(ctx, info);
+}
+
+// ----------------------------
+// Local inspect helper
+// ----------------------------
+function inspectAndShow(ctx, path) {
+  const p = String(path || "").trim();
+  if (!p) {
+    setDetail(ctx, { error: "Not found: (empty path)" });
+    return false;
+  }
+
+  const info = ctx.inspector.inspect(p, {
+    includeRef: true,
+    includeChildren: true,
+    show: false,
+  });
+
+  if (!info) {
+    setDetail(ctx, { error: `Not found: ${p}` });
+    return false;
+  }
+
+  setDetail(ctx, info);
+  return true;
+}
+
+// ----------------------------
+// Wiring
+// ----------------------------
+function wireDetailEvents(ctx, info) {
+  const { detailEl } = ctx;
+
+  // 🎯 set target (re-root to current node, by ABSOLUTE PATH)
+  const useRootBtn = detailEl.querySelector("[data-use-root]");
+  if (useRootBtn) {
+    useRootBtn.onclick = () => {
+      const ok = ctx.lib.root.setRootFromInput(ctx, info.path);
+      if (!ok) setDetail(ctx, { error: `Not found / not rootable: ${info.path}` });
+    };
+  }
+
+  // ../ up one dir (optional)
+  const upRootBtn = detailEl.querySelector("[data-up-root]");
+  if (upRootBtn) {
+    const goUpOne = ctx.lib.path.goUpOne;
+      upRootBtn.onclick = () => goUpOne(ctx);
+
+  }
+
+  // child chips -> inspect
+  detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
+    btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
+  });
+}
+
+export { setDetail as set };
+export default { set: setDetail };
