@@ -78,7 +78,7 @@ function renderCollapsibleTree(
 	const { node, path, depth } = stack.pop();
 	count++;
 
-	const isBranch = !!node && (node.type === "hash" || node.type === "array");
+	const isBranch = !!node && (node.type === "hash" || node.type === "array" || node.type==="class");
 	const isOpen = isBranch && expanded.has(path);
 	const kids = node?.children || [];
 
