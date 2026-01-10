@@ -663,42 +663,18 @@ class TreeInspector {
 	if (!node) return null;
 
 	// If you clicked a ref node (shared/cycle), deref it to the canonical node for display.
-	let viewNode = node;
-	let refPath = null;
-	let path = null;
+	canonicalPath = node.path;
 	if (node?.type === "ref" && node.ref != null) {
-	    console.log('try deref');
 	    const canonical = this._findByRef(node.ref);
-	    if (!canonical || canonical.node === node) return null;
-	    console.log(canonical);
-	    viewNode = canonical;
-	    refPath = canonical.path; // canonical absolute path
-	    path = typeof target === 'string'? target:viewNode.path;
-	}else {
-	    path = node.path;
-	    refPath = node.path;
-	}
+	    if (canonical && canonical.node !== node)
+		canonicalPath = canonical.path;
 
-	const payload = {
-	    type: viewNode.type,
-	    name: viewNode.name,
-	    path,                         // keep clicked path
-	    refPath: refPath || null,     // where the “real” node is
-	    signature: viewNode.signature ?? null,
-	    parentPath: parent ? parent.path : null,
-	    childCount: Array.isArray(viewNode.children) ? viewNode.children.length : 0,
-	    childrenPreview: Array.isArray(viewNode.children)
-		? viewNode.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
-		: [],
-	};
-
-	if (includeChildren) payload.children = viewNode.children || [];
-	if (includeRef) payload.ref = viewNode.ref;
-	/*
+	
 	const payload = {
 	    type: node.type,
 	    name: node.name,
 	    path: node.path,
+	    canonicalPath,
 	    pathParts: node.pathParts,
 	    parentPath: node.parentPath ?? null,
 	    depth: node.depth ?? null,
@@ -713,7 +689,7 @@ class TreeInspector {
 
 	if (includeChildren) payload.children = node.children || [];
 	if (includeRef) payload.ref = node.ref;
-	*/
+	
 	if (show) {
 	    const icon = TreeInspector.ICONS[node.type] ?? TreeInspector.ICONS.scalar;
 	    console.log(`${icon} ${node.path}`);
