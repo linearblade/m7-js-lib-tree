@@ -409,7 +409,7 @@ class TreeInspector {
 	if (type === "class") {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
-	    const entries = this._classChildren(value, {
+	    const entries = this._classChildren(node, {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
