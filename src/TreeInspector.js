@@ -671,11 +671,12 @@ class TreeInspector {
 	    const canonical = this._findByRef(node.ref);
 	    if (!canonical || canonical.node === node) return null;
 	    console.log(canonical);
-	    viewNode = canonical.node;
+	    viewNode = canonical;
 	    refPath = canonical.path; // canonical absolute path
 	    path = typeof target === 'string'? target:viewNode.path;
 	}else {
 	    path = node.path;
+	    refPath = node.path;
 	}
 
 	const payload = {
