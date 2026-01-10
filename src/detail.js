@@ -1,34 +1,5 @@
 // detail.js
 
-function derefNode(node){
-    return node;
-    if (node?.type !== "ref" && node.ref === null) 
-	return node;
-    
-    const canonical = this._findByRef(node.ref);
-    if (canonical?.node && canonical.node !== node) {
-	viewNode = canonical.node;
-	refPath = canonical.path; // canonical absolute path
-    }
-
-
-    const payload = {
-	type: viewNode.type,
-	name: viewNode.name,
-	path,                         // keep clicked path
-	refPath: refPath || null,     // where the “real” node is
-	signature: viewNode.signature ?? null,
-	parentPath: parent ? parent.path : null,
-	childCount: Array.isArray(viewNode.children) ? viewNode.children.length : 0,
-	childrenPreview: Array.isArray(viewNode.children)
-	    ? viewNode.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
-	    : [],
-    };
-    
-    if (includeChildren) payload.children = viewNode.children || [];
-    if (includeRef) payload.ref = viewNode.ref;
-    return payload;
-}
 /**
  * detail.js
  * Renders the right-side detail panel and wires local interactions.
@@ -53,24 +24,47 @@ function setDetail(ctx, info) {
     const { detailEl } = ctx;
     const { iconFor, chipCss, escapeHtml, escapeAttr } = ctx.lib.helpers;
 
-    info = derefNode(info);
+    
+    if (info?.error) {
+	detailEl.innerHTML = `<div style="color:#ffb3b3;">${escapeHtml(info.error)}</div>`;
+	return;
+    }
+
+    if (info?.note) {
+	detailEl.innerHTML = `<div style="opacity:0.9;">${escapeHtml(info.note)}</div>`;
+	return;
+    }
+
+    const icon = iconFor(ctx, info.type);
+    const sig = info.signature;
 
     
-  if (info?.error) {
-    detailEl.innerHTML = `<div style="color:#ffb3b3;">${escapeHtml(info.error)}</div>`;
-    return;
-  }
 
-  if (info?.note) {
-    detailEl.innerHTML = `<div style="opacity:0.9;">${escapeHtml(info.note)}</div>`;
-    return;
-  }
-
-  const icon = iconFor(ctx, info.type);
-  const sig = info.signature;
-
-  detailEl.innerHTML = `
+    const canonicalPath = info.canonicalPath || info.refPath || null;
+    const showCanonical =
+	  info.type === "ref" &&
+	  canonicalPath &&
+	  canonicalPath !== info.path;
+    
+    detailEl.innerHTML = `
     <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
+
+    ${
+      showCanonical
+        ? `
+      <div style="
+        margin: 8px 0 10px;
+        padding: 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.05);
+      ">
+        <div style="opacity:0.8; margin-bottom:6px;">points to</div>
+        <div style="white-space:pre-wrap;">${escapeHtml(canonicalPath)}</div>
+      </div>
+      `
+        : ""
+    }
 
     <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
       <div style="font-size:18px;">${icon}</div>
@@ -93,32 +87,32 @@ function setDetail(ctx, info) {
     ${
       sig
         ? `
-      <div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
+	<div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
         <div style="opacity:0.8; margin-bottom:6px;">signature</div>
         <div><b>${escapeHtml(sig.name || "(anonymous)")}</b> (${escapeHtml(
             (sig.params || []).join(", ")
-          )})</div>
+        )})</div>
         <div style="opacity:0.75;">arity: ${sig.arity}${sig.isNative ? " • native" : ""}</div>
-      </div>
-    `
+	</div>
+	`
         : ""
     }
 
     ${
       sig?.sourcePreview
         ? `
-      <div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
+	<div style="margin:10px 0; padding:8px; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:rgba(255,255,255,0.05);">
         <div style="opacity:0.8; margin-bottom:6px;">source preview</div>
         <pre style="white-space:pre-wrap; margin:0;">${escapeHtml(sig.sourcePreview)}</pre>
-      </div>
-    `
+	</div>
+	`
         : ""
     }
 
     ${
       info?.valuePreview
         ? `
-      <div style="
+	<div style="
         margin:10px 0;
         padding:8px;
         border:1px solid rgba(255,255,255,0.12);
@@ -127,36 +121,36 @@ function setDetail(ctx, info) {
       ">
         <div style="opacity:0.8; margin-bottom:6px;">value</div>
         <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
-      </div>
-    `
+	</div>
+	`
         : ""
     }
 
     ${
       Array.isArray(info.children) && info.children.length
         ? `
-      <div style="margin-top:10px;">
+	<div style="margin-top:10px;">
         <div style="opacity:0.8; margin-bottom:6px;">children</div>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
-          ${info.children
-            .slice(0, 60)
-            .map((c) => {
+        ${info.children
+          .slice(0, 60)
+          .map((c) => {
               const childPath = c?.path || `${info.path}.${c.name}`;
               return `
                 <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
                   ${escapeHtml(iconFor(ctx, c.type))} ${escapeHtml(c.name)}
                 </button>
               `;
-            })
-            .join("")}
-        </div>
-      </div>
-    `
+          })
+          .join("")}
+    </div>
+	</div>
+	`
         : `<div style="opacity:0.7;">(no children)</div>`
     }
   `;
 
-  wireDetailEvents(ctx, info);
+    wireDetailEvents(ctx, info);
 }
 
 
@@ -164,40 +158,40 @@ function setDetail(ctx, info) {
 // Local inspect helper (detail.js local)
 // ----------------------------
 function synthetic_inspectAndShow(ctx, path) {
-  const p = String(path || "").trim();
-  if (!p) {
-    setDetail(ctx, { error: "Not found: (empty path)" });
-    return false;
-  }
-
-  let info = ctx.inspector.inspect(p, {
-    includeRef: true,
-    includeChildren: true,
-    show: false,
-  });
-
-  if (!info) {
-    setDetail(ctx, { error: `Not found: ${p}` });
-    return false;
-  }
-
-  // Class expansion hook (class defs + class-like functions)
-  if (info.ref) {
-    const isClass =
-      info.type === "class" ||
-      (info.type === "function" &&
-        ctx.lib.class_inspector.isInspectableClass(info.ref));
-
-    if (isClass) {
-      info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
-        includeSymbols: true,
-        skipBuiltins: false,
-      });
+    const p = String(path || "").trim();
+    if (!p) {
+	setDetail(ctx, { error: "Not found: (empty path)" });
+	return false;
     }
-  }
 
-  setDetail(ctx, info);
-  return true;
+    let info = ctx.inspector.inspect(p, {
+	includeRef: true,
+	includeChildren: true,
+	show: false,
+    });
+
+    if (!info) {
+	setDetail(ctx, { error: `Not found: ${p}` });
+	return false;
+    }
+
+    // Class expansion hook (class defs + class-like functions)
+    if (info.ref) {
+	const isClass =
+	      info.type === "class" ||
+	      (info.type === "function" &&
+               ctx.lib.class_inspector.isInspectableClass(info.ref));
+
+	if (isClass) {
+	    info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
+		includeSymbols: true,
+		skipBuiltins: false,
+	    });
+	}
+    }
+
+    setDetail(ctx, info);
+    return true;
 }
 
 // ----------------------------
@@ -240,29 +234,29 @@ function inspectAndShow(ctx, path) {
 // Wiring
 // ----------------------------
 function wireDetailEvents(ctx, info) {
-  const { detailEl } = ctx;
+    const { detailEl } = ctx;
 
-  // 🎯 set target (re-root to current node, by ABSOLUTE PATH)
-  const useRootBtn = detailEl.querySelector("[data-use-root]");
-  if (useRootBtn) {
-    useRootBtn.onclick = () => {
-      const ok = ctx.lib.root.setRootFromInput(ctx, info.path);
-      if (!ok) setDetail(ctx, { error: `Not found / not rootable: ${info.path}` });
-    };
-  }
+    // 🎯 set target (re-root to current node, by ABSOLUTE PATH)
+    const useRootBtn = detailEl.querySelector("[data-use-root]");
+    if (useRootBtn) {
+	useRootBtn.onclick = () => {
+	    const ok = ctx.lib.root.setRootFromInput(ctx, info.path);
+	    if (!ok) setDetail(ctx, { error: `Not found / not rootable: ${info.path}` });
+	};
+    }
 
-  // ../ up one dir (optional)
-  const upRootBtn = detailEl.querySelector("[data-up-root]");
-  if (upRootBtn) {
-    const goUpOne = ctx.lib.path.goUpOne;
-      upRootBtn.onclick = () => goUpOne(ctx);
+    // ../ up one dir (optional)
+    const upRootBtn = detailEl.querySelector("[data-up-root]");
+    if (upRootBtn) {
+	const goUpOne = ctx.lib.path.goUpOne;
+	upRootBtn.onclick = () => goUpOne(ctx);
 
-  }
+    }
 
-  // child chips -> inspect
-  detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
-    btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
-  });
+    // child chips -> inspect
+    detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
+	btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
+    });
 }
 
 export { setDetail as set };

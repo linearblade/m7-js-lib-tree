@@ -440,30 +440,30 @@ class TreeInspector {
 
 	    // IMPORTANT: index children manually
 	    for (const child of entries) {
-		this._indexNode(child);
+	    this._indexNode(child);
 	    }
 
 	    return node; */
 	    /*
-	    node.children.push(...entries);
-	    console.log('in class diver, checking...',entries);
-	    for (const { name: k, value: v } of entries) {
-		node.children.push(
-		    this._parseNode({
-			value: v,
-			name: k,
-			pathParts: pathParts.concat([k]),
-			parentPath: path,
-			depth: depth + 1,
-			seen,
-			maxDepth,
-			includeNonEnumerable,
-			includeClasses,
-		    })
-		);
-	    }
-	    console.log(node);
-	    return node;*/
+	      node.children.push(...entries);
+	      console.log('in class diver, checking...',entries);
+	      for (const { name: k, value: v } of entries) {
+	      node.children.push(
+	      this._parseNode({
+	      value: v,
+	      name: k,
+	      pathParts: pathParts.concat([k]),
+	      parentPath: path,
+	      depth: depth + 1,
+	      seen,
+	      maxDepth,
+	      includeNonEnumerable,
+	      includeClasses,
+	      })
+	      );
+	      }
+	      console.log(node);
+	      return node;*/
 	}
 
 	// existing hash/array behavior
@@ -881,78 +881,12 @@ class TreeInspector {
     }
 
     static getFunctionSignature(fn) {
-  const info = {
-    name: fn?.name || "",
-    arity: typeof fn === "function" ? fn.length : 0,
-    params: null,
-    isNative: false,
-    sourcePreview: null,
-  };
-
-  if (typeof fn !== "function") return info;
-
-  let src = "";
-  try { src = Function.prototype.toString.call(fn); }
-  catch { return info; }
-
-  info.isNative = /\{\s*\[native code\]\s*\}/.test(src);
-  info.sourcePreview = src.length > 200 ? src.slice(0, 200) + "…" : src;
-  if (info.isNative) return info;
-
-  // ---- NEW: class definition => pull constructor(...) params ----
-  // class X { constructor(a,b=1) {...} foo(x) {...} }
-  if (/^\s*class\b/.test(src)) {
-    // NOTE: this is intentionally “simple”: it matches until the first ')'
-    // (so destructuring with nested parens may not be perfect, but good enough for most)
-    const cm = src.match(/\bconstructor\s*\(([^)]*)\)/);
-
-    // default constructor => no params
-    if (!cm) {
-      info.params = [];
-      return info;
-    }
-
-    const raw = (cm[1] ?? "").trim();
-    info.params = raw
-      ? raw.split(",").map(s => s.trim()).filter(Boolean)
-      : [];
-    return info;
-  }
-
-  // ---- existing: function / arrow / method / accessor ----
-  const m =
-    // function foo(a,b) {…}
-    src.match(/^[\s\(]*function\b[^(]*\(([^)]*)\)/) ||
-    // (a,b) => …
-    src.match(/^[\s\(]*\(([^)]*)\)\s*=>/) ||
-    // a => …
-    src.match(/^[\s\(]*([^=\s\(\),]+)\s*=>/) ||
-    // async foo(a,b) {…}
-    src.match(/^\s*async\s+[*]?\s*[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-    // *foo(a,b) {…} OR foo(a,b) {…}   (class methods stringify like this too)
-    src.match(/^\s*[*]?\s*[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-    // get foo() {…}
-    src.match(/^\s*get\s+[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-    // set foo(v) {…}
-    src.match(/^\s*set\s+[^(\s]+\s*\(([^)]*)\)\s*\{/);
-
-  if (!m) return info;
-
-  const raw = (m[1] ?? "").trim();
-  info.params = raw
-    ? raw.split(",").map(s => s.trim()).filter(Boolean)
-    : [];
-  return info;
-}
-    static ddgetFunctionSignature(fn) {
 	const info = {
 	    name: fn?.name || "",
 	    arity: typeof fn === "function" ? fn.length : 0,
 	    params: null,
 	    isNative: false,
 	    sourcePreview: null,
-	    // optional extras if you want them later:
-	    // kind: null, // "function" | "method" | "arrow" | "class" | "getter" | "setter"
 	};
 
 	if (typeof fn !== "function") return info;
@@ -965,83 +899,49 @@ class TreeInspector {
 	info.sourcePreview = src.length > 200 ? src.slice(0, 200) + "…" : src;
 	if (info.isNative) return info;
 
-	// IMPORTANT:
-	// - class methods stringify as: "method(a) { ... }"
-	// - getters/setters: "get x() { ... }", "set x(v) { ... }"
-	// - async method: "async method(a) { ... }"
-	// - generator method: "*method(a) { ... }"
-	// - class definition: "class X { ... }" (no direct param list other than constructor inside)
+	// ---- NEW: class definition => pull constructor(...) params ----
+	// class X { constructor(a,b=1) {...} foo(x) {...} }
+	if (/^\s*class\b/.test(src)) {
+	    // NOTE: this is intentionally “simple”: it matches until the first ')'
+	    // (so destructuring with nested parens may not be perfect, but good enough for most)
+	    const cm = src.match(/\bconstructor\s*\(([^)]*)\)/);
+
+	    // default constructor => no params
+	    if (!cm) {
+		info.params = [];
+		return info;
+	    }
+
+	    const raw = (cm[1] ?? "").trim();
+	    info.params = raw
+		? raw.split(",").map(s => s.trim()).filter(Boolean)
+		: [];
+	    return info;
+	}
+
+	// ---- existing: function / arrow / method / accessor ----
 	const m =
 	      // function foo(a,b) {…}
 	      src.match(/^[\s\(]*function\b[^(]*\(([^)]*)\)/) ||
-
 	      // (a,b) => …
 	      src.match(/^[\s\(]*\(([^)]*)\)\s*=>/) ||
-
 	      // a => …
 	      src.match(/^[\s\(]*([^=\s\(\),]+)\s*=>/) ||
-
 	      // async foo(a,b) {…}
 	      src.match(/^\s*async\s+[*]?\s*[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-
-	      // *foo(a,b) {…}   OR   foo(a,b) {…}
+	      // *foo(a,b) {…} OR foo(a,b) {…}   (class methods stringify like this too)
 	      src.match(/^\s*[*]?\s*[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-
 	      // get foo() {…}
 	      src.match(/^\s*get\s+[^(\s]+\s*\(([^)]*)\)\s*\{/) ||
-
 	      // set foo(v) {…}
 	      src.match(/^\s*set\s+[^(\s]+\s*\(([^)]*)\)\s*\{/);
 
 	if (!m) return info;
 
 	const raw = (m[1] ?? "").trim();
-	if (!raw) {
-	    info.params = [];
-	    return info;
-	}
-
-	// Keep your simple split (works for common cases).
-	// NOTE: destructuring/defaults with commas will still split “wrong”,
-	// but that’s already true for your current implementation.
-	info.params = raw.split(",").map(s => s.trim()).filter(Boolean);
-	return info;
-    }
-    
-    static dgetFunctionSignature(fn) {
-	const info = {
-	    name: fn?.name || "",
-	    arity: typeof fn === "function" ? fn.length : 0,
-	    params: null,
-	    isNative: false,
-	    sourcePreview: null,
-	};
-
-	if (typeof fn !== "function") return info;
-
-	let src = "";
-	try { src = Function.prototype.toString.call(fn); }
-	catch { return info; }
-
-	info.isNative = /\{\s*\[native code\]\s*\}/.test(src);
-	info.sourcePreview = src.length > 200 ? src.slice(0, 200) + "…" : src;
-
-	if (info.isNative) return info;
-
-	const m =
-	      src.match(/^[\s\(]*function\b[^(]*\(([^)]*)\)/) ||
-	      src.match(/^[\s\(]*\(([^)]*)\)\s*=>/) ||
-	      src.match(/^[\s\(]*([^=\s\(\),]+)\s*=>/);
-
-	if (!m) return info;
-
-	const raw = (m[1] ?? "").trim();
-	if (!raw) {
-	    info.params = [];
-	    return info;
-	}
-
-	info.params = raw.split(",").map(s => s.trim()).filter(Boolean);
+	info.params = raw
+	    ? raw.split(",").map(s => s.trim()).filter(Boolean)
+	    : [];
 	return info;
     }
 }
