@@ -405,7 +405,7 @@ class TreeInspector {
 
 	node.children = [];
 
-	// ✅ NEW: class traversal delegated to traits
+	
 	if (type === "class") {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
@@ -413,6 +413,28 @@ class TreeInspector {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
+
+	    for (const entry of entries) {
+		//coerce into something digestible.
+		const k = entry.name;
+		const v = entry.ref;              
+		node.children.push(
+		    this._parseNode({
+			value: v,
+			name: k,
+			pathParts: pathParts.concat([k]),
+			parentPath: path,
+			depth: depth + 1,
+			seen,
+			maxDepth,
+			includeNonEnumerable,
+			includeClasses,
+		    })
+		);
+	    }
+	    return node;
+
+	    /*
 	    // entries are already nodes
 	    node.children = entries;
 
@@ -421,7 +443,7 @@ class TreeInspector {
 		this._indexNode(child);
 	    }
 
-	    return node;
+	    return node; */
 	    /*
 	    node.children.push(...entries);
 	    console.log('in class diver, checking...',entries);
