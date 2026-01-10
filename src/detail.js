@@ -39,7 +39,6 @@ function setDetail(ctx, info) {
     const icon = iconFor(ctx, info.type);
     const sig = info.signature;
 
-    
     ctx.detailPath = info?.canonicalPath || info?.refPath || info?.path || null;
     const canonicalPath = info.canonicalPath || info.refPath || null;
     const showCanonical =
@@ -266,16 +265,38 @@ function wireDetailEvents(ctx, info) {
     const parentPathOf = ctx.lib.path.parentPathOf;
 
     upRootBtn.onclick = () => {
+	const root = String(ctx.currentRootPath || ctx.rootPath || "").trim();
+	const cur  = String(ctx.detailPath || info?.canonicalPath || info?.refPath || info?.path || "").trim();
+	if (!root || !cur) return;
+
+	const up = parentPathOf(cur);
+	if (!up) return;
+
+	const inRoot = (up === root) || up.startsWith(root + ".");
+	if (!inRoot) {
+	    setDetail(ctx, { note: `At root: ${root}` }); // or { error: ... } if you prefer
+	    return;
+	}
+
+	inspectAndShow(ctx, up);
+    };
+    /*
+    const upRootBtn = detailEl.querySelector("[data-up-root]");
+    const parentPathOf = ctx.lib.path.parentPathOf;
+
+    upRootBtn.onclick = () => {
 	const cur = String(ctx.detailPath || "").trim();
 	const up = parentPathOf(cur);
 	if (!up) return;
 	inspectAndShow(ctx, up);
-    };
+	};
+    */
+    
     // child chips -> inspect
     detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
 	btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
     });
-
+    
     //  canonical ref jump
     const canonicalBtn = detailEl.querySelector("[data-canonical-path]");
     if (canonicalBtn) {
