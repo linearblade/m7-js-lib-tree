@@ -274,7 +274,7 @@ function wireDetailEvents(ctx, info) {
 
 	const inRoot = (up === root) || up.startsWith(root + ".");
 	if (!inRoot) {
-	    alert('already at root');
+	    alert(`already at root: '${root}'. Use tree nav ../ or set a new path`);
 	    //setDetail(ctx, { note: `At root: ${root}` }); 
 	    return;
 	}
