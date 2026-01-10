@@ -410,7 +410,7 @@ class TreeInspector {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
-
+	    console.log('in class diver, checking...');
 	    for (const { name: k, value: v } of entries) {
 		node.children.push(
 		    this._parseNode({
@@ -426,7 +426,7 @@ class TreeInspector {
 		    })
 		);
 	    }
-
+	    console.log(node);
 	    return node;
 	}
 
