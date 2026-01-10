@@ -65,8 +65,9 @@ export const ClassInspectorTraits = {
     //
     _classChildren(node, { includeSymbols = true, skipBuiltins = false } = {}) {
 	const Ctor = node?.ref;
+	console.log('IN CLASS CHILDREN',node,Ctor);
 	if (!isClassDefinition(Ctor)) return [];
-	console.log('IN CLASS CHILDREN',node);
+
 	const out = [];
 
 	// We add two synthetic folders: statics + prototype
