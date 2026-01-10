@@ -35,11 +35,12 @@ function setDetail(ctx, info) {
 	return;
     }
 
+    
     const icon = iconFor(ctx, info.type);
     const sig = info.signature;
 
     
-
+    ctx.detailPath = info?.canonicalPath || info?.refPath || info?.path || null;
     const canonicalPath = info.canonicalPath || info.refPath || null;
     const showCanonical =
 	  info.type === "ref" &&
@@ -251,6 +252,7 @@ function wireDetailEvents(ctx, info) {
 	};
     }
 
+    /*
     // ../ up one dir (optional)
     const upRootBtn = detailEl.querySelector("[data-up-root]");
     if (upRootBtn) {
@@ -258,7 +260,17 @@ function wireDetailEvents(ctx, info) {
 	upRootBtn.onclick = () => goUpOne(ctx);
 
     }
+    */
 
+    const upRootBtn = detailEl.querySelector("[data-up-root]");
+    const parentPathOf = ctx.lib.path.parentPathOf;
+
+    upRootBtn.onclick = () => {
+	const cur = String(ctx.detailPath || "").trim();
+	const up = parentPathOf(cur);
+	if (!up) return;
+	inspectAndShow(ctx, up);
+    };
     // child chips -> inspect
     detailEl.querySelectorAll("button[data-path]").forEach((btn) => {
 	btn.onclick = () => inspectAndShow(ctx, btn.getAttribute("data-path"));
