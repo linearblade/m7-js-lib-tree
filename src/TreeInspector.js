@@ -280,6 +280,7 @@ class TreeInspector {
     parse({
 	value = this.rootRef,
 	maxDepth = this.options.maxDepth,
+	includeClasses = this.options.includeClasses
     } = {}) {
 	// flush
 	this.tree = null;
@@ -308,6 +309,7 @@ class TreeInspector {
 	    depth: 0,
 	    seen,
 	    maxDepth,
+	    includeClasses
 	});
 
 	this.tree = rootNode;
