@@ -1,6 +1,7 @@
 // detail.js
 
 function derefNode(node){
+    return node;
     if (node?.type !== "ref" && node.ref === null) 
 	return node;
     

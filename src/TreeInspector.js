@@ -662,6 +662,38 @@ class TreeInspector {
 
 	if (!node) return null;
 
+	// If you clicked a ref node (shared/cycle), deref it to the canonical node for display.
+	let viewNode = node;
+	let refPath = null;
+
+	if (node?.type === "ref" && node.ref != null) {
+	    const canonical = this._findByRef(node.ref);
+	    if (canonical?.node && canonical.node !== node) {
+		viewNode = canonical.node;
+		refPath = canonical.path; // canonical absolute path
+
+		
+	    }
+
+	    
+	}
+
+	const payload = {
+	    type: viewNode.type,
+	    name: viewNode.name,
+	    path,                         // keep clicked path
+	    refPath: refPath || null,     // where the “real” node is
+	    signature: viewNode.signature ?? null,
+	    parentPath: parent ? parent.path : null,
+	    childCount: Array.isArray(viewNode.children) ? viewNode.children.length : 0,
+	    childrenPreview: Array.isArray(viewNode.children)
+		? viewNode.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type }))
+		: [],
+	};
+
+	if (includeChildren) payload.children = viewNode.children || [];
+	if (includeRef) payload.ref = viewNode.ref;
+	/*
 	const payload = {
 	    type: node.type,
 	    name: node.name,
@@ -680,7 +712,7 @@ class TreeInspector {
 
 	if (includeChildren) payload.children = node.children || [];
 	if (includeRef) payload.ref = node.ref;
-
+	*/
 	if (show) {
 	    const icon = TreeInspector.ICONS[node.type] ?? TreeInspector.ICONS.scalar;
 	    console.log(`${icon} ${node.path}`);
