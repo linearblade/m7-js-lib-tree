@@ -427,7 +427,7 @@ class TreeInspector {
 			depth: depth + 1,
 			seen,
 			maxDepth,
-			includeNonEnumerable,
+			includeNonEnumerable : true,
 			includeClasses,
 		    })
 		);
