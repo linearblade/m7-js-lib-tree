@@ -42,11 +42,12 @@ function renderCollapsibleTree(
 	"margin-bottom:8px; opacity:0.9; display:flex; gap:8px; align-items:center;";
 
     head.innerHTML = `
+     <!--
      <span style="opacity:0.9;">
        root:
        <span style="opacity:1; font-weight:700;">${escapeHtml(rootPath)}</span>
      </span>
-
+     -->
      <span style="opacity:0.7; margin-left:6px;">
        stem: <span style="opacity:1; font-weight:700;">${escapeHtml(stem || "")}</span>
      </span>
