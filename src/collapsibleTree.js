@@ -146,6 +146,7 @@ function renderTree(ctx) {
 	    type: root?.isStatic??false,
 	    path: root.path || root.name,
 	    faint: false,
+	    node: root
 	})
     );
 
@@ -159,6 +160,7 @@ function renderTree(ctx) {
 		isStatic: child?.isStatic??false,
 		path: childPath,
 		faint: false,
+		node:child
 	    })
 	);
     }
@@ -167,7 +169,7 @@ function renderTree(ctx) {
     ctx.lib.path.showPath(ctx, root.path || root.name);
 }
 
-function renderNodeLine(ctx, { label, type, path, faint = false,isStatic= false }) {
+function renderNodeLine(ctx, { label, type, path, faint = false,node=null }) {
     const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
     const li = document.createElement("li");
     li.style.cssText = `
@@ -188,7 +190,7 @@ function renderNodeLine(ctx, { label, type, path, faint = false,isStatic= false 
 
     li.onclick = () => ctx.lib.path.showPath(ctx, path);
 
-    const icon = iconFor(ctx,type,isStatic);
+    const icon = iconFor(ctx,type,node);
     li.innerHTML = `<span style="opacity:0.95">${icon}</span> <span>${escapeHtml(
     label
   )}</span>`;
@@ -276,7 +278,7 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
     // icon
     const icon = document.createElement("span");
     icon.style.cssText = "opacity:0.95;";
-    icon.textContent = iconFor(ctx,node.type,node?.isStatic??false);
+    icon.textContent = iconFor(ctx,node.type,node);
 
     // label (inspect)
     const label = document.createElement("span");

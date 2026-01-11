@@ -36,7 +36,7 @@ function setDetail(ctx, info) {
     }
 
     
-    const icon = iconFor(ctx, info.type,info?.isStatic??false);
+    const icon = iconFor(ctx, info.type,info);
     const sig = info.signature;
 
     ctx.detailPath = info?.canonicalPath || info?.refPath || info?.path || null;
@@ -144,7 +144,7 @@ ${
               const childPath = c?.path || `${info.path}.${c.name}`;
               return `
                 <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
-                  ${escapeHtml(iconFor(ctx, c.type,c?.isStatic??false))} ${escapeHtml(c.name)}
+                  ${escapeHtml(iconFor(ctx, c.type,c))} ${escapeHtml(c.name)}
                 </button>
               `;
           })

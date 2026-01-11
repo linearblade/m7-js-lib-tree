@@ -530,6 +530,7 @@ class TreeInspector {
 		  ? Reflect.ownKeys(value)
 		  : Object.keys(value);
 
+	    
 	    for (const k of keys) {
 		const v = value[k];
 		node.children.push(
@@ -546,6 +547,24 @@ class TreeInspector {
 		    })
 		);
 	    }
+
+	    this._appendInstanceProtoChildren(
+		node,
+		value,
+		{
+		    pathParts,
+		    depth,
+		    seen,
+		    maxDepth,
+		    includeNonEnumerable,
+		    includeClasses,
+		},
+		{
+		    includeSymbols: true,
+		    skipBuiltins: true,
+		}
+	    );
+	    
 	} else {
 	    for (let i = 0; i < value.length; i++) {
 		const k = String(i);
@@ -733,7 +752,8 @@ class TreeInspector {
 	    signature: node.signature ?? null,
 	    valuePreview: node.valuePreview ?? null,
 	    valueKind: node.valueKind ?? null,
-	    isStatic : node.isStatic ?? null,
+	    isStatic : node.isStatic ?? false,
+	    isInstance: node.isInstance ?? false,
 	    childCount: Array.isArray(node.children) ? node.children.length : 0,
 	    childrenPreview: Array.isArray(node.children)
 		? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type, path: c.path }))
@@ -907,19 +927,6 @@ class TreeInspector {
 	    });
 	}
     }
-
-    _enrichHashInstance(node, value) {
-	const meta = getInstanceMeta(value);
-	if (!meta) return;
-
-	node.isInstance = true;
-	node.instanceClassName = meta.className;
-	node.instanceCtorRef = meta.ctor;
-
-	// Optional: if the class was already indexed somewhere, link it
-	const ctorNode = this._findByRef?.(meta.ctor);
-	if (ctorNode?.path) node.instanceClassPath = ctorNode.path;
-    }
     
     // ----------------------------
     // Helpers
@@ -1019,38 +1026,6 @@ class TreeInspector {
 }
 
 
-function getInstanceMeta(obj) {
-    if (!obj || typeof obj !== "object") return null;
-
-    const proto = Object.getPrototypeOf(obj);
-    if (!proto) return null;
-
-    // ignore plain objects
-    if (proto === Object.prototype || proto === null) return null;
-
-    const Ctor = proto.constructor;
-    if (typeof Ctor !== "function") return null;
-
-    // only treat actual `class` constructors as “instances”
-    if (!isClassDefinition(Ctor)) return null;
-
-    return {
-	ctor: Ctor,
-	className: Ctor.name || "(anonymous)",
-    };
-}
-
-
-// "class Foo {}" => toString starts with "class "
-function isClassDefinition(fn) {
-    if (!isCtorFunction(fn)) return false;
-    try {
-        const s = Function.prototype.toString.call(fn);
-        return /^\s*class\s/.test(s);
-    } catch {
-        return false;
-    }
-}
 
 
 applyMixins(TreeInspector, ClassInspectorTraits);

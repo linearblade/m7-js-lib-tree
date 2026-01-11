@@ -1,4 +1,6 @@
-function iconFor(ctx, type,isStatic=false) {
+function iconFor(ctx, type,opts = {}) {
+    if(opts === null || typeof opts !=='object') opts = {};
+    const {isStatic=false,isInstance=false} =opts;
     const ICONS = ctx.TreeInspector?.ICONS;
     if (!ICONS) throw new Error("[helpers.iconFor] ctx.TreeInspector.ICONS missing");
     
@@ -11,7 +13,14 @@ function iconFor(ctx, type,isStatic=false) {
     // consider 
     //const staticMarker = "Ⓢ`";
     const staticMarker = "⚡";
-    return isStatic === true ? `${staticMarker} ${base}`  : base;
+    //const instanceMarker = "Ⓘ";
+    const instanceMarker = "📦";//boxunicode
+    //const instanceMarker = "&#128230;"; //box entity
+    if (isStatic)
+	return `${staticMarker} ${base}`;
+    if(isInstance)
+	return `${instanceMarker} ${base}`;
+    return base;
 }
 
 function btnCss() {

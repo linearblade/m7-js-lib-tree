@@ -16,7 +16,8 @@ function renderFindResults(ctx, q, hits) {
       label: h.path,
       type: h.type,
       path: h.path,
-      faint: true,
+	faint: true,
+	node: h
     });
     ul.appendChild(li);
   });
