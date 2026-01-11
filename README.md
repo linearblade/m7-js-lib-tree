@@ -1,4 +1,4 @@
-# m7-js-lib-tree 
+# m7-js-lib-tree
 
 **Runtime JavaScript Tree Inspector & Console**
 
