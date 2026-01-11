@@ -7,7 +7,7 @@
   })
 
   [...tree.index.byPath.values()]
-window.lib.testClass = class test { x = 1;static y = 2; static static_method(){}; instance_method(){}}
+  window.lib.testClass = class test { x = 1;static y = 2; static static_method(){}; instance_method(){}}
 
 */
 import treeConsole          from './console.js';
@@ -371,6 +371,8 @@ class TreeInspector {
 		depth,
 	    };
 	    this._indexNode(refNode);
+
+	    
 	    return refNode;
 	}
 
@@ -395,6 +397,12 @@ class TreeInspector {
 
 	this._indexNode(node);
 
+	// instance enrichment for objects
+	if (type === "hash") {
+	    this._enrichHashInstance(node, value);
+	}
+
+	
 	// if not a branch, we’re done
 	if (!isBranch) return node;
 
@@ -410,52 +418,52 @@ class TreeInspector {
 	node.children = [];
 
 	if (type === "class") {
-  const entries = this._classChildren(node, {
-    includeNonEnumerable,
-    // any other knobs you want to pass through
-  });
+	    const entries = this._classChildren(node, {
+		includeNonEnumerable,
+		// any other knobs you want to pass through
+	    });
 	    console.log('got this', entries);
-  for (const entry of entries) {
-    const k = entry.name;
-    const v = entry.ref;
+	    for (const entry of entries) {
+		const k = entry.name;
+		const v = entry.ref;
 
-    // Special: ensure prototype branch includes non-enumerables (class methods are non-enumerable)
-    const forceNonEnum =
-      entry && entry.name === "prototype" && entry.type === "hash";
+		// Special: ensure prototype branch includes non-enumerables (class methods are non-enumerable)
+		const forceNonEnum =
+		      entry && entry.name === "prototype" && entry.type === "hash";
 
-    const childNode = this._parseNode({
-      value: v,
-      name: k,
-      pathParts: pathParts.concat([k]),
-      parentPath: path,
-      depth: depth + 1,
-      seen,
-      maxDepth,
-      includeNonEnumerable: forceNonEnum ? true : includeNonEnumerable,
-      includeClasses,
-    });
+		const childNode = this._parseNode({
+		    value: v,
+		    name: k,
+		    pathParts: pathParts.concat([k]),
+		    parentPath: path,
+		    depth: depth + 1,
+		    seen,
+		    maxDepth,
+		    includeNonEnumerable: forceNonEnum ? true : includeNonEnumerable,
+		    includeClasses,
+		});
 
-    // Preserve/enrich metadata coming from ClassInspector
-    if (entry && typeof entry === "object") {
-      // keep any flags like isStatic, ownerKind, synthetic...
-      for (const metaKey of Object.keys(entry)) {
-        if (metaKey === "children") continue; // TreeInspector owns children
-        if (metaKey === "ref") continue;      // TreeInspector owns ref
-        if (metaKey === "path") continue;     // TreeInspector owns path
-        if (metaKey === "pathParts") continue;
-        if (metaKey === "parentPath") continue;
-        if (metaKey === "depth") continue;
-        if (metaKey === "name") continue;
-        if (metaKey === "type") continue;     // TreeInspector may compute type
-        childNode[metaKey] = entry[metaKey];
-      }
-    }
+		// Preserve/enrich metadata coming from ClassInspector
+		if (entry && typeof entry === "object") {
+		    // keep any flags like isStatic, ownerKind, synthetic...
+		    for (const metaKey of Object.keys(entry)) {
+			if (metaKey === "children") continue; // TreeInspector owns children
+			if (metaKey === "ref") continue;      // TreeInspector owns ref
+			if (metaKey === "path") continue;     // TreeInspector owns path
+			if (metaKey === "pathParts") continue;
+			if (metaKey === "parentPath") continue;
+			if (metaKey === "depth") continue;
+			if (metaKey === "name") continue;
+			if (metaKey === "type") continue;     // TreeInspector may compute type
+			childNode[metaKey] = entry[metaKey];
+		    }
+		}
 
-    node.children.push(childNode);
-  }
+		node.children.push(childNode);
+	    }
 
-  return node;
-}
+	    return node;
+	}
 	if (0 &&type === "class") {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
@@ -900,6 +908,19 @@ class TreeInspector {
 	}
     }
 
+    _enrichHashInstance(node, value) {
+	const meta = getInstanceMeta(value);
+	if (!meta) return;
+
+	node.isInstance = true;
+	node.instanceClassName = meta.className;
+	node.instanceCtorRef = meta.ctor;
+
+	// Optional: if the class was already indexed somewhere, link it
+	const ctorNode = this._findByRef?.(meta.ctor);
+	if (ctorNode?.path) node.instanceClassPath = ctorNode.path;
+    }
+    
     // ----------------------------
     // Helpers
     // ----------------------------
@@ -996,6 +1017,31 @@ class TreeInspector {
 	return info;
     }
 }
+
+
+function getInstanceMeta(obj) {
+    if (!obj || typeof obj !== "object") return null;
+
+    const proto = Object.getPrototypeOf(obj);
+    if (!proto) return null;
+
+    // ignore plain objects
+    if (proto === Object.prototype || proto === null) return null;
+
+    const Ctor = proto.constructor;
+    if (typeof Ctor !== "function") return null;
+
+    // only treat actual `class` constructors as “instances”
+    if (!isClassDefinition(Ctor)) return null;
+
+    return {
+	ctor: Ctor,
+	className: Ctor.name || "(anonymous)",
+    };
+}
+
+
+
 applyMixins(TreeInspector, ClassInspectorTraits);
 function factory(...args){
     return new TreeInspector(...args);
