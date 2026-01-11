@@ -10,6 +10,29 @@
 // - We mark generated nodes with `synthetic: true`
 // - We avoid built-in noise by default (configurable)
 
+function getInstanceMeta(obj) {
+    if (!obj || typeof obj !== "object") return null;
+
+    const proto = Object.getPrototypeOf(obj);
+    if (!proto) return null;
+
+    // ignore plain objects
+    if (proto === Object.prototype || proto === null) return null;
+
+    const Ctor = proto.constructor;
+    if (typeof Ctor !== "function") return null;
+
+    // only treat actual `class` constructors as “instances”
+    if (!isClassDefinition(Ctor)) return null;
+
+    return {
+	ctor: Ctor,
+	className: Ctor.name || "(anonymous)",
+    };
+}
+
+
+
 function isCtorFunction(x) {
     return typeof x === "function";
 }
@@ -215,6 +238,22 @@ _classChildren(node, { includeSymbols = true, skipBuiltins = true } = {}) {
 	}
 	return out;
     },
+
+
+    
+    _enrichHashInstance(node, value) {
+	const meta = getInstanceMeta(value);
+	if (!meta) return;
+
+	node.isInstance = true;
+	node.instanceClassName = meta.className;
+	node.instanceCtorRef = meta.ctor;
+
+	// Optional: if the class was already indexed somewhere, link it
+	const ctorNode = this._findByRef?.(meta.ctor);
+	if (ctorNode?.path) node.instanceClassPath = ctorNode.path;
+    }
+
 };
 
 
