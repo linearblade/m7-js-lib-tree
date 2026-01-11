@@ -908,8 +908,30 @@ class TreeInspector {
 	}
     }
 
+
+    getInstanceMeta(obj) {
+	if (!obj || typeof obj !== "object") return null;
+	
+	const proto = Object.getPrototypeOf(obj);
+	if (!proto) return null;
+	
+	// ignore plain objects
+	if (proto === Object.prototype || proto === null) return null;
+	
+	const Ctor = proto.constructor;
+	if (typeof Ctor !== "function") return null;
+	
+	// only treat actual `class` constructors as “instances”
+	if (!this.isClassDefinition(Ctor)) return null;
+	
+	return {
+	    ctor: Ctor,
+	    className: Ctor.name || "(anonymous)",
+	};
+    }
+
     _enrichHashInstance(node, value) {
-	const meta = getInstanceMeta(value);
+	const meta = this.getInstanceMeta(value);
 	if (!meta) return;
 
 	node.isInstance = true;
@@ -1019,26 +1041,6 @@ class TreeInspector {
 }
 
 
-function getInstanceMeta(obj) {
-    if (!obj || typeof obj !== "object") return null;
-
-    const proto = Object.getPrototypeOf(obj);
-    if (!proto) return null;
-
-    // ignore plain objects
-    if (proto === Object.prototype || proto === null) return null;
-
-    const Ctor = proto.constructor;
-    if (typeof Ctor !== "function") return null;
-
-    // only treat actual `class` constructors as “instances”
-    if (!isClassDefinition(Ctor)) return null;
-
-    return {
-	ctor: Ctor,
-	className: Ctor.name || "(anonymous)",
-    };
-}
 
 
 
