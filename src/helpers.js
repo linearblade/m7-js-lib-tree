@@ -9,7 +9,7 @@ function iconFor(ctx, type,isStatic=false) {
 	     : ICONS.scalar)
     );
     // consider 
-    const staticMarker = "Ⓢ`";
+    //const staticMarker = "Ⓢ`";
     const staticMarker = "⚡";
     return isStatic === true ? `${staticMarker} ${base}`  : base;
 }
