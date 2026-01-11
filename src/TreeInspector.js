@@ -721,6 +721,7 @@ class TreeInspector {
 	    signature: node.signature ?? null,
 	    valuePreview: node.valuePreview ?? null,
 	    valueKind: node.valueKind ?? null,
+	    isStatic : node.isStatic ?? null,
 	    childCount: Array.isArray(node.children) ? node.children.length : 0,
 	    childrenPreview: Array.isArray(node.children)
 		? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type, path: c.path }))
