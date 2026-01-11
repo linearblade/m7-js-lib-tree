@@ -21,7 +21,7 @@ function renderCollapsibleTree(
     } = {}
 ) {
     const { treeEl, expanded } = ctx;
-    const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
+    const { escapeHtml, chipCss } = ctx.lib.helpers;
     const { parentPathOf, leafNameOf, goUpOne } = ctx.lib.path;
 
     
@@ -126,7 +126,7 @@ function renderCollapsibleTree(
 // ---------- Render helpers (optional; kept for compatibility) ----------
 function renderTree(ctx) {
     const { inspector, treeEl } = ctx;
-    const { escapeHtml, chipCss, iconFor} = ctx.lib.helpers;
+    const { escapeHtml, chipCss} = ctx.lib.helpers;
     treeEl.innerHTML = "";
 
     const root = inspector.tree;
@@ -143,6 +143,7 @@ function renderTree(ctx) {
 	renderNodeLine(ctx, {
 	    label: root.name,
 	    type: root.type,
+	    type: root?.isStatic??false,
 	    path: root.path || root.name,
 	    faint: false,
 	})
@@ -155,6 +156,7 @@ function renderTree(ctx) {
 	    renderNodeLine(ctx, {
 		label: child.name,
 		type: child.type,
+		isStatic: child?.isStatic??false,
 		path: childPath,
 		faint: false,
 	    })
@@ -165,7 +167,7 @@ function renderTree(ctx) {
     ctx.lib.path.showPath(ctx, root.path || root.name);
 }
 
-function renderNodeLine(ctx, { label, type, path, faint = false }) {
+function renderNodeLine(ctx, { label, type, path, faint = false,isStatic= false }) {
     const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
     const li = document.createElement("li");
     li.style.cssText = `
@@ -186,7 +188,7 @@ function renderNodeLine(ctx, { label, type, path, faint = false }) {
 
     li.onclick = () => ctx.lib.path.showPath(ctx, path);
 
-    const icon = iconFor(ctx,type);
+    const icon = iconFor(ctx,type,isStatic);
     li.innerHTML = `<span style="opacity:0.95">${icon}</span> <span>${escapeHtml(
     label
   )}</span>`;
@@ -196,7 +198,7 @@ function renderNodeLine(ctx, { label, type, path, faint = false }) {
 
 // expands nodes under a given node (bounded to avoid infinite/huge blowups)
 function expandAllUnder(ctx, node, path, limit = 5000) {
-    const { escapeHtml, chipCss, iconFor} = ctx.lib.helpers;
+    const { escapeHtml, chipCss} = ctx.lib.helpers;
     const { expanded } = ctx;
 
     const stack = [{ node, path }];
@@ -274,7 +276,7 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
     // icon
     const icon = document.createElement("span");
     icon.style.cssText = "opacity:0.95;";
-    icon.textContent = iconFor(ctx,node.type);
+    icon.textContent = iconFor(ctx,node.type,node?.isStatic??false);
 
     // label (inspect)
     const label = document.createElement("span");
