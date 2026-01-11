@@ -8,8 +8,10 @@ function iconFor(ctx, type,isStatic=false) {
 	     ? ICONS.scalar
 	     : ICONS.scalar)
     );
-    // consider ⚡
-    return isStatic === true ? `${base} Ⓢ` : base;
+    // consider 
+    const staticMarker = "Ⓢ`";
+    const staticMarker = "⚡";
+    return isStatic === true ? `${staticMarker} ${base}`  : base;
 }
 
 function btnCss() {
