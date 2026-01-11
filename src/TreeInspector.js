@@ -5,6 +5,10 @@
   error: [(sys, ctx) => console.error("Failed:", ctx.failed)],
   package: { hooks: true }
   })
+
+  [...tree.index.byPath.values()]
+window.lib.testClass = class test { x = 1;static y = 2; static static_method(){}; instance_method(){}}
+
 */
 import treeConsole          from './console.js';
 import applyMixins          from './applyMixins.js';

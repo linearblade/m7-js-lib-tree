@@ -1,13 +1,15 @@
-function iconFor(ctx, type) {
-  const ICONS = ctx.TreeInspector?.ICONS;
-  if (!ICONS) throw new Error("[helpers.iconFor] ctx.TreeInspector.ICONS missing");
-
-  return (
-    ICONS[type] ??
-    (["string", "number", "boolean", "undefined", "symbol", "bigint"].includes(type)
-      ? ICONS.scalar
-      : ICONS.scalar)
-  );
+function iconFor(ctx, type,isStatic=false) {
+    const ICONS = ctx.TreeInspector?.ICONS;
+    if (!ICONS) throw new Error("[helpers.iconFor] ctx.TreeInspector.ICONS missing");
+    
+    const base =  (
+	ICONS[type] ??
+	    (["string", "number", "boolean", "undefined", "symbol", "bigint"].includes(type)
+	     ? ICONS.scalar
+	     : ICONS.scalar)
+    );
+    // consider ⚡
+    return isStatic === true ? `${base} Ⓢ` : base;
 }
 
 function btnCss() {
