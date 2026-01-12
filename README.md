@@ -2,50 +2,82 @@
 
 **Runtime JavaScript Tree Inspector & Console**
 
-A lightweight developer tool for **exploring, scanning, and reverse-engineering large JavaScript object graphs at runtime** — designed specifically to work with the **M7 library ecosystem**, but usable standalone.
+A lightweight developer tool for **exploring, scanning, and reverse‑engineering large JavaScript object graphs at runtime**. Designed for the **M7 library ecosystem**, but fully usable as a standalone inspector for any JavaScript object.
 
 ---
 
-## 🔍 About
+## 🔍 Overview
 
-M7 has accumulated **over 25 years of JavaScript libraries**, the vast majority of which are **well-designed, battle-tested, and still in active use**. Over time, this has resulted in a very large and capable toolchain that:
+M7 represents **over 25 years of accumulated JavaScript libraries** — modular, battle‑tested, and still actively used. The ecosystem favors:
 
-* spans many problem domains
-* loads incrementally at runtime (by design)
-* exposes large, composable APIs
-* prioritizes reuse over reinvention
+* incremental runtime loading
+* large, composable APIs
+* reuse over reinvention
 
-**m7-js-tree** exists to make it **easy to *************************find************************* what already exists**.
+Over time, this produces **very large object graphs** that are difficult to reason about using traditional tooling.
 
-The primary goal is not to "understand" legacy code, but to **quickly locate functions, utilities, and subsystems** so you don’t end up rewriting something you’ve already written 500 times before.
+**m7-js-tree** exists to make it easy to **find what already exists**.
 
-It builds an **enriched parse tree** of live JavaScript objects and provides an **inline interactive console** to:
+The goal is not deep static analysis, but **rapid discovery**:
 
-* search for libraries, functions, and classes
-* browse object hierarchies when needed
-* inspect function signatures and metadata
-* jump directly to relevant parts of the API
-* safely navigate large, runtime-assembled graphs
+* locate functions, utilities, and subsystems
+* browse API surfaces when documentation is missing or outdated
+* inspect runtime‑assembled structures
+* avoid rewriting code that already exists
 
-This is **not** a static analyzer — it reflects **what is actually loaded and available at runtime**, which is critical when working with large, on-demand systems.
+This tool reflects **what is actually loaded at runtime**, but the inspected tree represents a **static snapshot** of that state until **Reparse** is explicitly triggered — which is critical for safely exploring large, on‑demand systems.
 
 ---
 
-### Usage
-use the '~' or backticks(`) to toggle minimize or open the panel.
+## 🧪 Intended Use Cases
+
+* Exploring undocumented or legacy APIs
+* Rapidly locating functions, utilities, and classes without guessing in a console
+* Inspecting large libraries on **mobile devices** where a developer console is unavailable or impractical
+* Copying stable object paths quickly for reuse, documentation, or debugging
+* Navigating complex runtime‑assembled graphs more reliably than ad‑hoc `console.log`
+* Working around browser dev‑console limitations (clutter, instability, excessive memory use)
+* Lightweight, on‑demand inspection that can be enabled during development and removed for production
+* Internal developer tooling
+
+---
+
+## 🖥 Usage
+
+Open the console by calling:
+
+```js
+lib.tree.console(path);
+```
+
+Where `path` can be **any object or dot‑path** you want to inspect. You can change or reset this later.
+
+### Controls
+
+* **`~` or <code>`</code>** — open / close the console panel
+* **Target** — sets the base path (root) for inspection
+* **Reparse** (top bar) — re‑parses the current target
+* **Tree** — opens the tree navigation menu
+* **Copy path / Copy value** — copies the selected node’s path or value
+
+### Navigation
+
+* **`../` (tree view)** — changes the current root path
+* **`../` (detail view)** — navigates upward *within* the current path
+
 ![m7-js-tree console screenshot](./demo.png)
 
+---
 
 ## 📦 Installation
 
-
-### Option 1: With M7 library (recommended)
+### Option 1: With M7 libraries (recommended)
 
 ```html
 <script type="module" src="https://static.m7.org/vendor/m7-js-lib-tree/src/auto.js"></script>
 ```
 
-This automatically registers the tree console under:
+Automatically registers the tree console as:
 
 ```js
 lib.tree.console(lib);
@@ -53,7 +85,7 @@ lib.tree.console(lib);
 
 ---
 
-### Option 2: Direct import (standalone or custom wiring)
+### Option 2: Standalone / direct import
 
 ```js
 import openConsole from "./m7-js-tree/index.js";
@@ -61,76 +93,62 @@ import openConsole from "./m7-js-tree/index.js";
 openConsole(window.lib); // or any object
 ```
 
-No bootstrap system required.
+No bootstrap or framework required.
 
 ---
 
 ## ✅ Requirements
 
-* **Required:** modern browser (ES modules)
-* **Optional:** `m7-js-lib` (for automatic registration & integration)
+* **Required:** modern browser with ES module support
+* **Optional:** `m7-js-lib` for automatic registration and integration
 
-This tool **does not require** M7 libraries to function — any object can be inspected.
-
----
-
-##
+This tool does **not** require M7 libraries — any JavaScript object can be inspected.
 
 ---
 
-## 🧠 Description
+## 🧠 How It Works
 
-m7-js-tree traverses JavaScript objects recursively and produces a structured tree representation:
+m7-js-tree traverses live JavaScript values and produces an enriched tree representation of:
 
-* hashes / objects
+* objects / hashes
 * arrays
 * functions
 * classes
-* scalars
+* scalar values
 * circular references
 
-The tree can be viewed as:
+The resulting structure can be used as:
 
-* a collapsible hierarchy
+* a collapsible navigation tree
 * a searchable index
 * an inspection surface for functions and classes
 
-The inline console UI is intentionally minimal and dependency-free, designed for **debugging, archaeology, and discovery**, not for production end-user interfaces.
+The inline console UI is intentionally minimal and dependency‑free, designed for **debugging, archaeology, and discovery** rather than end‑user presentation.
 
 ---
 
-## 🛠️ Current Features
+## 🛠 Current Features
 
 * Runtime tree parsing
 * Collapsible tree view
-* Fast path-based inspection
+* Absolute path‑based inspection
 * Substring & predicate search (`find`)
 * Function signature extraction
 * Circular reference detection
 * Inline DOM console (toggleable)
-* Works with `window`, `lib`, or any object
+* Works with `window`, `lib`, or any object root
 
 ---
 
-## 🧪 Intended Use Cases
+## 🧭 Roadmap
 
-* Exploring undocumented or legacy APIs
-* Understanding runtime-loaded modules
-* Reverse-engineering large object graphs
-* Debugging complex application state
-* Internal developer tooling
+* Improved UI and keyboard navigation
 
----
-
-## 🧭 TODO / Roadmap
-
-* Improved UI / keyboard navigation
-* Variable root switching (`lib`, `window`, custom)
-* Class mining & prototype chain views
-* Link nodes to online docs / wiki
-* Copy-path and deep-link support
 * Optional persistence of tree state
-* Package and library searching via repositories usable with **m7BootStrap** ([https://github.com/linearblade/m7BootStrap](https://github.com/linearblade/m7BootStrap))
+
+* Linking nodes to external documentation
+
+* Repository‑backed package search via **m7BootStrap**
 
 ---
 
@@ -138,8 +156,8 @@ The inline console UI is intentionally minimal and dependency-free, designed for
 
 See [`LICENSE.md`](LICENSE.md) for full terms.
 
-Free for personal, non-commercial use.
-Commercial licensing available under the **M7 Moderate Team License (MTL-10)**.
+* Free for personal, non‑commercial use
+* Commercial licensing available under the **M7 Moderate Team License (MTL‑10)**
 
 ---
 
