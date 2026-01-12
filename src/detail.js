@@ -47,7 +47,7 @@ function setDetail(ctx, info) {
 	  canonicalPath !== info.path;
     
     detailEl.innerHTML = `
-    <div style="opacity:0.8;margin-bottom:5px" onclick="${copyToClipboard(info.path)}">${escapeHtml(info.path)}</div>
+    <div style="opacity:0.8;margin-bottom:5px" data-copy-me="info.path" >${escapeHtml(info.path)}</div>
 
 ${
   showCanonical
@@ -244,6 +244,13 @@ function inspectAndShow(ctx, path) {
 function wireDetailEvents(ctx, info) {
     const { detailEl } = ctx;
 
+    const copyBtn = detailEl.querySelector("['data-copy-me']");
+    if(copyBtn){
+	copyBtn.onclick = async () => {
+	    copyToClipboard(info.path);
+	}
+    }
+    
     // 🎯 set target (re-root to current node, by ABSOLUTE PATH)
     const useRootBtn = detailEl.querySelector("[data-use-root]");
     if (useRootBtn) {
