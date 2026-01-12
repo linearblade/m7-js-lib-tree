@@ -22,7 +22,7 @@
 function setDetail(ctx, info) {
 
     const { detailEl } = ctx;
-    const { iconFor, chipCss, escapeHtml, escapeAttr,copyToClipboard } = ctx.lib.helpers;
+    const { iconFor, chipCss, escapeHtml, escapeAttr} = ctx.lib.helpers;
 
     
     if (info?.error) {
@@ -247,7 +247,7 @@ function wireDetailEvents(ctx, info) {
     const copyBtn = detailEl.querySelector("[data-copy-me]");
     if(copyBtn){
 	copyBtn.onclick = async () => {
-	    copyToClipboard(info.path);
+	    ctx.lib.helpers.copyToClipboard(info.path);
 	}
     }
     
