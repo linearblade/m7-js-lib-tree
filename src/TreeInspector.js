@@ -30,6 +30,8 @@ class TreeInspector {
 	ref: "♻️",
 	null: "∅",
 	undefined: "∅",
+	string: "🔤",
+	number: "🔢"
     };
 
     static NODE_ENRICHERS = {
