@@ -22,7 +22,7 @@
 function setDetail(ctx, info) {
 
     const { detailEl } = ctx;
-    const { iconFor, chipCss, escapeHtml, escapeAttr } = ctx.lib.helpers;
+    const { iconFor, chipCss, escapeHtml, escapeAttr,copyToClipboard } = ctx.lib.helpers;
 
     
     if (info?.error) {
@@ -47,7 +47,7 @@ function setDetail(ctx, info) {
 	  canonicalPath !== info.path;
     
     detailEl.innerHTML = `
-    <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
+    <div style="opacity:0.8;margin-bottom:5px" onclick="${copyToClipbard(info.path)}">${escapeHtml(info.path)}</div>
 
 ${
   showCanonical

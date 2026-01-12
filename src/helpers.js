@@ -59,5 +59,40 @@ function escapeAttr(s) {
   return escapeHtml(s).replaceAll("`", "&#096;");
 }
 
-export { iconFor, btnCss, chipCss, escapeHtml, escapeAttr };
-export default { iconFor, btnCss, chipCss, escapeHtml, escapeAttr };
+async function copyToClipboard(value) {
+    const text =
+	  typeof value === "string"
+	  ? value
+	  : (() => {
+              try {
+		  return JSON.stringify(value, null, 2);
+              } catch {
+		  return String(value);
+              }
+          })();
+
+    // Preferred modern API
+    if (navigator?.clipboard?.writeText) {
+	await navigator.clipboard.writeText(text);
+	return true;
+    }
+
+    // Fallback (older browsers, restricted contexts)
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+
+    try {
+	document.execCommand("copy");
+	return true;
+    } finally {
+	document.body.removeChild(ta);
+    }
+}
+
+export { iconFor, btnCss, chipCss, escapeHtml, escapeAttr, copyToClipboard };
+export default { iconFor, btnCss, chipCss, escapeHtml, escapeAttr ,copyToClipboard};
