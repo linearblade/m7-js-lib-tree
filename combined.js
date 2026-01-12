@@ -56,9 +56,80 @@ export default TreeInspector;
 //   - <ClassPath>.prototype.<methodName>
 // - We mark generated nodes with `synthetic: true`
 // - We avoid built-in noise by default (configurable)
+// being instance shit
+function getInstanceMeta(obj) {
+    if (!obj || typeof obj !== "object") return null;
+
+    const proto = Object.getPrototypeOf(obj);
+    if (!proto) return null;
+
+    // ignore plain objects
+    if (proto === Object.prototype || proto === null) return null;
+
+    const Ctor = proto.constructor;
+    if (typeof Ctor !== "function") return null;
+
+    // only treat actual `class` constructors as “instances”
+    if (!isClassDefinition(Ctor)) return null;
+
+    return {
+	ctor: Ctor,
+	className: Ctor.name || "(anonymous)",
+    };
+}
+
+function getProtoChain(obj) {
+  const out = [];
+  let p = Object.getPrototypeOf(obj);
+  while (p && p !== Object.prototype) {
+    out.push(p);
+    p = Object.getPrototypeOf(p);
+  }
+  return out;
+}
+
+function getProtoMembers(obj, { includeSymbols = true } = {}) {
+  const chain = getProtoChain(obj);
+  const out = [];
+
+  for (const proto of chain) {
+    const names = Object.getOwnPropertyNames(proto);
+    for (const n of names) out.push({ key: n, proto });
+
+    if (includeSymbols) {
+      const syms = Object.getOwnPropertySymbols(proto);
+      for (const s of syms) out.push({ key: s, proto });
+    }
+  }
+
+  return out;
+}
+//end instance shit
+
 
 function isCtorFunction(x) {
     return typeof x === "function";
+}
+
+function isClassLike(fn) {
+  if (typeof fn !== "function") return false;
+
+  // true classes
+  if (isClassDefinition(fn)) return true;
+
+  // Heuristic: functions with a prototype that has methods (non-enumerable)
+  const proto = fn.prototype;
+  if (proto && typeof proto === "object") {
+    const names = Object.getOwnPropertyNames(proto).filter(n => n !== "constructor");
+    const syms = Object.getOwnPropertySymbols(proto);
+    if (names.length || syms.length) return true;
+  }
+
+  // Heuristic: constructor has interesting own props (statics)
+  const own = Object.getOwnPropertyNames(fn).filter(n => !["length", "name", "prototype"].includes(n));
+  if (own.length) return true;
+
+  return false;
 }
 
 // "class Foo {}" => toString starts with "class "
@@ -105,12 +176,71 @@ export const ClassInspectorTraits = {
 	return isClassDefinition(ref);
     },
 
+
+    // ---- TreeInspector hook: expand class node children ----
+//
+// Desired shape:
+//   MyClass
+//     - y              (static)
+//     - static_method  (static)
+//     - prototype
+//         - instance_method
+//
+_classChildren(node, { includeSymbols = true, skipBuiltins = true } = {}) {
+  const Ctor = node?.ref;
+  if (!isClassDefinition(Ctor)) return [];
+
+  const out = [];
+
+  // --- statics on the ctor (addressable: <ClassPath>.<key>) ---
+  for (const key of getOwnKeys(Ctor, { includeSymbols })) {
+    const name = typeof key === "symbol" ? key.toString() : String(key);
+    if (shouldSkipKey(name, { skipBuiltins })) continue;
+
+    const desc = Object.getOwnPropertyDescriptor(Ctor, key);
+    const type = typeFromDescriptor(desc);
+
+    const childPath = `${node.path}.${name}`;
+
+    out.push({
+      type,
+      name,
+      ref: desc?.value, // accessors => undefined here (ok)
+      path: childPath,
+      pathParts: childPath.split("."),
+      parentPath: node.path,
+      depth: node.depth + 1,
+      synthetic: true,      // derived via reflection
+      isStatic: true,       // <- enrichment you asked for
+      ownerKind: "static",  // optional, useful in UI later
+    });
+  }
+
+  // --- prototype folder (addressable: <ClassPath>.prototype.<key>) ---
+  const protoPath = `${node.path}.prototype`;
+  const protoFolder = {
+    type: "hash",
+    name: "prototype",
+    ref: Ctor.prototype,
+    path: protoPath,
+    pathParts: protoPath.split("."),
+    parentPath: node.path,
+    depth: node.depth + 1,
+    synthetic: true,
+    isPrototype: true,
+    // children are filled by TreeInspector's normal object parsing (with non-enum enabled in TreeInspector.js patch)
+  };
+
+  out.push(protoFolder);
+  return out;
+},
+    
     // ---- TreeInspector hook: expand class node children ----
     //
     // Returns an array of "child nodes" in the TreeInspector node format:
     // { type, name, path, pathParts, parentPath, depth, ref, children?, synthetic? }
     //
-    _classChildren(node, { includeSymbols = true, skipBuiltins = false } = {}) {
+    _oldclassChildren(node, { includeSymbols = true, skipBuiltins = false } = {}) {
 	const Ctor = node?.ref;
 	console.log('IN CLASS CHILDREN',node,Ctor);
 	if (!isClassDefinition(Ctor)) return [];
@@ -195,9 +325,161 @@ export const ClassInspectorTraits = {
 	    }
 	}
 
-	out.push(staticsFolder, protoFolder);
+	
+	//out.push(staticsFolder, protoFolder);
+	out.push(protoFolder);
+	for (const item of staticsFolder.children){
+	    out.push(item);
+	}
 	return out;
     },
+
+
+    // detect if its an instance of a class
+    _enrichHashInstance(node, value) {
+	const meta = getInstanceMeta(value);
+	if (!meta) return;
+	//console.log('ENRICHING INSTANCE CLASS INFO', node.name);
+	node.isInstance = true;
+	node.instanceClassName = meta.className;
+	node.instanceCtorRef = meta.ctor;
+
+	// Optional: if the class was already indexed somewhere, link it
+	const ctorNode = this._findByRef?.(meta.ctor);
+	if (ctorNode?.path) node.instanceClassPath = ctorNode.path;
+    },
+
+
+    _appendInstanceProtoChildren(node, value, parseOpts, opts = {}) {
+	const {
+	    includeSymbols = true,
+	    skipBuiltins = true,
+	} = opts;
+
+	const {
+	    pathParts,
+	    depth,
+	    seen,
+	    maxDepth,
+	    includeNonEnumerable,
+	    includeClasses,
+	} = parseOpts;
+
+	if (!node?.path || !value) return;
+	if (!node.isInstance) return;
+
+	const own = new Set(Reflect.ownKeys(value).map(k => String(k)));
+
+	const already = new Set();
+	if (Array.isArray(node.children)) {
+	    for (const c of node.children) {
+		if (c?.name) already.add(String(c.name));
+	    }
+	}
+
+	// add constructor link (addressable: <instPath>.constructor)
+if (!already.has("constructor")) {
+  const Ctor = value?.constructor;
+
+  if (typeof Ctor === "function") {
+    const ctorNode = this._parseNode({
+      value: Ctor,
+      name: "constructor",
+      pathParts: pathParts.concat(["constructor"]),
+      parentPath: node.path,
+      depth: depth + 1,
+      seen,
+      maxDepth,
+      includeNonEnumerable,
+      includeClasses,
+    });
+
+    ctorNode.synthetic = true;
+    ctorNode.inherited = true;
+    ctorNode.ownerKind = "constructor";
+
+    node.children.push(ctorNode);
+    already.add("constructor");
+  }
+}
+
+// append static members as <instPath>.constructor.<name>
+const Ctor = value?.constructor;
+if (typeof Ctor === "function") {
+  const staticKeys = Reflect.ownKeys(Ctor);
+
+  for (const k of staticKeys) {
+    const name = typeof k === "symbol" ? k.toString() : String(k);
+
+    // skip builtins for constructor itself
+    if (name === "length" || name === "name" || name === "prototype") continue;
+    if (skipBuiltins && shouldSkipKey(name, { skipBuiltins })) continue;
+
+    // avoid duplicates (instance might already have same-named prop)
+    if (own.has(name)) continue;
+
+    // IMPORTANT: these are different pathParts (constructor namespace)
+    const childPathParts = pathParts.concat(["constructor", name]);
+
+    const desc = Object.getOwnPropertyDescriptor(Ctor, k);
+    const v = desc?.value;
+
+    const childNode = this._parseNode({
+      value: v,
+      name,
+      pathParts: childPathParts,
+      parentPath: `${node.path}.constructor`,
+      depth: depth + 2,
+      seen,
+      maxDepth,
+      includeNonEnumerable,
+      includeClasses,
+    });
+
+    childNode.synthetic = true;
+    childNode.isStatic = true;
+    childNode.ownerKind = "static";
+    childNode.via = "constructor"; // optional flag
+
+    // Note: to keep UI clean, you may want these AFTER prototype methods
+    node.children.push(childNode);
+  }
+}
+	
+	for (const { key, proto } of getProtoMembers(value, { includeSymbols })) {
+	    const name = typeof key === "symbol" ? key.toString() : String(key);
+
+	    if (name === "constructor") continue;
+	    if (skipBuiltins && shouldSkipKey(name, { skipBuiltins })) continue;
+
+	    // never shadow own props
+	    if (own.has(name)) continue;
+	    if (already.has(name)) continue;
+
+	    // IMPORTANT: use the same pipeline as normal nodes
+	    const desc = Object.getOwnPropertyDescriptor(proto, key);
+	    const v = desc?.value;
+
+	    const childNode = this._parseNode({
+		value: v,
+		name,
+		pathParts: pathParts.concat([name]),
+		parentPath: node.path,
+		depth: depth + 1,
+		seen,
+		maxDepth,
+		includeNonEnumerable,
+		includeClasses,
+	    });
+
+	    childNode.synthetic = true;
+	    childNode.inherited = true;
+	    childNode.ownerKind = "prototype";
+
+	    node.children.push(childNode);
+	    already.add(name);
+	}
+    }
 };
 
 
@@ -380,6 +662,29 @@ function isInspectableClass(ref, { allowConstructorFunctions = true } = {}) {
  * - the prototype object
  */
 function getSyntheticRoots(ctx, { classRef, classPath }) {
+  if (!ctx) throw new Error("[classInspector.getSyntheticRoots] ctx required");
+  if (!isFn(classRef)) throw new Error("[classInspector.getSyntheticRoots] classRef must be function");
+  if (!classPath) throw new Error("[classInspector.getSyntheticRoots] classPath required");
+
+  const protoPath = `${classPath}.prototype`;
+
+  return [
+    {
+      type: "hash",
+      name: "prototype",
+      ref: classRef.prototype,
+      path: protoPath,
+      pathParts: protoPath.split("."),
+      parentPath: classPath,
+      depth: null,
+      children: [],
+      synthetic: true,
+      isPrototype: true,
+    },
+  ];
+}
+/*
+function getSyntheticRoots(ctx, { classRef, classPath }) {
     if (!ctx) throw new Error("[classInspector.getSyntheticRoots] ctx required");
     if (!isFn(classRef)) throw new Error("[classInspector.getSyntheticRoots] classRef must be function");
     if (!classPath) throw new Error("[classInspector.getSyntheticRoots] classPath required");
@@ -412,7 +717,7 @@ function getSyntheticRoots(ctx, { classRef, classPath }) {
 	},
     ];
 }
-
+*/
 /**
  * Enumerate members of:
  * - the class itself (static)
@@ -536,6 +841,62 @@ function enumerateMembers(ctx, {
  * Output:
  * - newInfo: same object (cloned shallow) with children[] filled (synthetic)
  */
+
+
+
+
+function expandClassInfo(ctx, info, opts = {}) {
+    if (!ctx) throw new Error("[classInspector.expandClassInfo] ctx required");
+    if (!info) throw new Error("[classInspector.expandClassInfo] info required");
+
+    const classRef = info.ref;
+    const classPath = info.path;
+
+    if (!isInspectableClass(classRef, opts)) {
+	// return as-is if not treatable
+	return info;
+    }
+
+    const includeSymbols = opts.includeSymbols ?? true;
+    const skipBuiltins = opts.skipBuiltins ?? false; // you said "get it all" for now
+
+    // 1) enumerate statics directly under the class path
+const staticMembers = enumerateMembers(ctx, {
+  ownerRef: classRef,
+  ownerPath: classPath,       // <- direct
+  includeSymbols,
+  skipBuiltins,
+  kind: "static",
+}).map((n) => ({ ...n, isStatic: true }));
+
+// 2) prototype root container
+const [protoRoot] = getSyntheticRoots(ctx, { classRef, classPath });
+
+const protoMembers = enumerateMembers(ctx, {
+  ownerRef: classRef.prototype,
+  ownerPath: protoRoot.path,
+  includeSymbols,
+  skipBuiltins,
+  kind: "prototype",
+});
+
+protoRoot.children = protoMembers;
+
+// 3) attach to info
+const out = { ...info };
+out.children = [...staticMembers, protoRoot];
+out.childCount = out.children.length;
+
+out.classInspector = {
+  synthetic: true,
+  staticCount: staticMembers.length,
+  protoCount: protoMembers.length,
+};
+
+return out;
+}
+/*
+  
 function expandClassInfo(ctx, info, opts = {}) {
     if (!ctx) throw new Error("[classInspector.expandClassInfo] ctx required");
     if (!info) throw new Error("[classInspector.expandClassInfo] info required");
@@ -587,7 +948,8 @@ function expandClassInfo(ctx, info, opts = {}) {
     };
 
     return out;
-}
+    }
+    */
 
 export {
     isInspectableClass,
@@ -633,7 +995,7 @@ function renderCollapsibleTree(
     } = {}
 ) {
     const { treeEl, expanded } = ctx;
-    const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
+    const { escapeHtml, chipCss } = ctx.lib.helpers;
     const { parentPathOf, leafNameOf, goUpOne } = ctx.lib.path;
 
     
@@ -738,7 +1100,7 @@ function renderCollapsibleTree(
 // ---------- Render helpers (optional; kept for compatibility) ----------
 function renderTree(ctx) {
     const { inspector, treeEl } = ctx;
-    const { escapeHtml, chipCss, iconFor} = ctx.lib.helpers;
+    const { escapeHtml, chipCss} = ctx.lib.helpers;
     treeEl.innerHTML = "";
 
     const root = inspector.tree;
@@ -755,8 +1117,10 @@ function renderTree(ctx) {
 	renderNodeLine(ctx, {
 	    label: root.name,
 	    type: root.type,
+	    type: root?.isStatic??false,
 	    path: root.path || root.name,
 	    faint: false,
+	    node: root
 	})
     );
 
@@ -767,8 +1131,10 @@ function renderTree(ctx) {
 	    renderNodeLine(ctx, {
 		label: child.name,
 		type: child.type,
+		isStatic: child?.isStatic??false,
 		path: childPath,
 		faint: false,
+		node:child
 	    })
 	);
     }
@@ -777,7 +1143,7 @@ function renderTree(ctx) {
     ctx.lib.path.showPath(ctx, root.path || root.name);
 }
 
-function renderNodeLine(ctx, { label, type, path, faint = false }) {
+function renderNodeLine(ctx, { label, type, path, faint = false,node=null }) {
     const { escapeHtml, chipCss, iconFor } = ctx.lib.helpers;
     const li = document.createElement("li");
     li.style.cssText = `
@@ -798,7 +1164,7 @@ function renderNodeLine(ctx, { label, type, path, faint = false }) {
 
     li.onclick = () => ctx.lib.path.showPath(ctx, path);
 
-    const icon = iconFor(ctx,type);
+    const icon = iconFor(ctx,type,node);
     li.innerHTML = `<span style="opacity:0.95">${icon}</span> <span>${escapeHtml(
     label
   )}</span>`;
@@ -808,7 +1174,7 @@ function renderNodeLine(ctx, { label, type, path, faint = false }) {
 
 // expands nodes under a given node (bounded to avoid infinite/huge blowups)
 function expandAllUnder(ctx, node, path, limit = 5000) {
-    const { escapeHtml, chipCss, iconFor} = ctx.lib.helpers;
+    const { escapeHtml, chipCss} = ctx.lib.helpers;
     const { expanded } = ctx;
 
     const stack = [{ node, path }];
@@ -886,7 +1252,7 @@ function renderTreeRow(ctx, { node, path, depth, maxNodes }) {
     // icon
     const icon = document.createElement("span");
     icon.style.cssText = "opacity:0.95;";
-    icon.textContent = iconFor(ctx,node.type);
+    icon.textContent = iconFor(ctx,node.type,node);
 
     // label (inspect)
     const label = document.createElement("span");
@@ -1483,7 +1849,7 @@ export default { build };
 function setDetail(ctx, info) {
 
     const { detailEl } = ctx;
-    const { iconFor, chipCss, escapeHtml, escapeAttr } = ctx.lib.helpers;
+    const { iconFor, chipCss, escapeHtml, escapeAttr} = ctx.lib.helpers;
 
     
     if (info?.error) {
@@ -1497,7 +1863,7 @@ function setDetail(ctx, info) {
     }
 
     
-    const icon = iconFor(ctx, info.type);
+    const icon = iconFor(ctx, info.type,info);
     const sig = info.signature;
 
     ctx.detailPath = info?.canonicalPath || info?.refPath || info?.path || null;
@@ -1508,7 +1874,7 @@ function setDetail(ctx, info) {
 	  canonicalPath !== info.path;
     
     detailEl.innerHTML = `
-    <div style="opacity:0.8;margin-bottom:5px">${escapeHtml(info.path)}</div>
+    <div style="opacity:0.8;margin-bottom:5px"  >${escapeHtml(info.path)} <button data-copy-path style="${chipCss()};padding:0 5px;">⧉</button> </div>
 
 ${
   showCanonical
@@ -1586,7 +1952,7 @@ ${
         border-radius:10px;
         background:rgba(255,255,255,0.05);
       ">
-        <div style="opacity:0.8; margin-bottom:6px;">value</div>
+        <div style="opacity:0.8; margin-bottom:6px;">value <button data-copy-value style="${chipCss()};padding:0 5px;">⧉</button></div>
         <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
 	</div>
 	`
@@ -1605,7 +1971,7 @@ ${
               const childPath = c?.path || `${info.path}.${c.name}`;
               return `
                 <button data-path="${escapeAttr(childPath)}" style="${chipCss()}">
-                  ${escapeHtml(iconFor(ctx, c.type))} ${escapeHtml(c.name)}
+                  ${escapeHtml(iconFor(ctx, c.type,c))} ${escapeHtml(c.name)}
                 </button>
               `;
           })
@@ -1643,6 +2009,7 @@ function synthetic_inspectAndShow(ctx, path) {
     }
 
     // Class expansion hook (class defs + class-like functions)
+    if (0) { //disable
     if (info.ref) {
 	const isClass =
 	      info.type === "class" ||
@@ -1655,6 +2022,7 @@ function synthetic_inspectAndShow(ctx, path) {
 		skipBuiltins: false,
 	    });
 	}
+    }
     }
 
     setDetail(ctx, info);
@@ -1677,14 +2045,14 @@ function inspectAndShow(ctx, path) {
       show: false,
       });*/
     let info = ctx.inspector.inspect(p, { includeRef:true, includeChildren:true, show:false });
-
+    /*
     if (info && (info.type === "class" || (info.type === "function" && ctx.lib.class_inspector.isInspectableClass(info.ref)))) {
 	info = ctx.lib.class_inspector.expandClassInfo(ctx, info, {
 	    includeSymbols: true,
 	    skipBuiltins: false, // “get it all”
 	});
     }
-
+    */
     ctx.lib.detail.set(ctx, info);
     
 
@@ -1703,6 +2071,19 @@ function inspectAndShow(ctx, path) {
 function wireDetailEvents(ctx, info) {
     const { detailEl } = ctx;
 
+    const copyPathBtn = detailEl.querySelector("[data-copy-path]");
+    if(copyPathBtn){
+	copyPathBtn.onclick = async () => {
+	    ctx.lib.helpers.copyToClipboard(info.path);
+	}
+    }
+    const copyValueBtn = detailEl.querySelector("[data-copy-value]");
+    if(copyValueBtn){
+	copyValueBtn.onclick = async () => {
+	    ctx.lib.helpers.copyToClipboard(info.valuePreview);
+	}
+    }
+    
     // 🎯 set target (re-root to current node, by ABSOLUTE PATH)
     const useRootBtn = detailEl.querySelector("[data-use-root]");
     if (useRootBtn) {
@@ -1945,7 +2326,8 @@ function renderFindResults(ctx, q, hits) {
       label: h.path,
       type: h.type,
       path: h.path,
-      faint: true,
+	faint: true,
+	node: h
     });
     ul.appendChild(li);
   });
@@ -1963,16 +2345,29 @@ export default { renderFindResults };
 
 # --- begin: helpers.js ---
 
-function iconFor(ctx, type) {
-  const ICONS = ctx.TreeInspector?.ICONS;
-  if (!ICONS) throw new Error("[helpers.iconFor] ctx.TreeInspector.ICONS missing");
-
-  return (
-    ICONS[type] ??
-    (["string", "number", "boolean", "undefined", "symbol", "bigint"].includes(type)
-      ? ICONS.scalar
-      : ICONS.scalar)
-  );
+function iconFor(ctx, type,opts = {}) {
+    if(opts === null || typeof opts !=='object') opts = {};
+    const {isStatic=false,isInstance=false} =opts;
+    const ICONS = ctx.TreeInspector?.ICONS;
+    if (!ICONS) throw new Error("[helpers.iconFor] ctx.TreeInspector.ICONS missing");
+    
+    const base =  (
+	ICONS[type] ??
+	    (["string", "number", "boolean", "undefined", "symbol", "bigint"].includes(type)
+	     ? ICONS.scalar
+	     : ICONS.scalar)
+    );
+    // consider 
+    //const staticMarker = "Ⓢ`";
+    const staticMarker = "⚡";
+    //const instanceMarker = "Ⓘ";
+    const instanceMarker = "📦";//boxunicode
+    //const instanceMarker = "&#128230;"; //box entity
+    if (isStatic)
+	return `${staticMarker} ${base}`;
+    if(isInstance)
+	return `${instanceMarker} ${base}`;
+    return base;
 }
 
 function btnCss() {
@@ -2011,8 +2406,43 @@ function escapeAttr(s) {
   return escapeHtml(s).replaceAll("`", "&#096;");
 }
 
-export { iconFor, btnCss, chipCss, escapeHtml, escapeAttr };
-export default { iconFor, btnCss, chipCss, escapeHtml, escapeAttr };
+async function copyToClipboard(value) {
+    const text =
+	  typeof value === "string"
+	  ? value
+	  : (() => {
+              try {
+		  return JSON.stringify(value, null, 2);
+              } catch {
+		  return String(value);
+              }
+          })();
+
+    // Preferred modern API
+    if (navigator?.clipboard?.writeText) {
+	await navigator.clipboard.writeText(text);
+	return true;
+    }
+
+    // Fallback (older browsers, restricted contexts)
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+
+    try {
+	document.execCommand("copy");
+	return true;
+    } finally {
+	document.body.removeChild(ta);
+    }
+}
+
+export { iconFor, btnCss, chipCss, escapeHtml, escapeAttr, copyToClipboard };
+export default { iconFor, btnCss, chipCss, escapeHtml, escapeAttr ,copyToClipboard};
 
 
 # --- end: helpers.js ---
@@ -2388,6 +2818,10 @@ function printTree(
   error: [(sys, ctx) => console.error("Failed:", ctx.failed)],
   package: { hooks: true }
   })
+
+  [...tree.index.byPath.values()]
+  window.lib.testClass = class test { x = 1;static y = 2; static static_method(){}; instance_method(){}}
+
 */
 import treeConsole          from './console.js';
 import applyMixins          from './applyMixins.js';
@@ -2409,6 +2843,9 @@ class TreeInspector {
 	ref: "♻️",
 	null: "∅",
 	undefined: "∅",
+	string: "🔤",
+	number: "🔢",
+	boolean: "✓" //x = '✕'
     };
 
     static NODE_ENRICHERS = {
@@ -2685,7 +3122,7 @@ class TreeInspector {
 	const rootName  = rootParts[rootParts.length - 1] ?? this.options.hint;
 
 	const seen = new WeakMap(); // obj -> canonical node (cycle/shared refs)
-	console.log('include classes = ',includeClasses);
+	//console.log('include classes = ',includeClasses);
 	const rootNode = this._parseNode({
 	    value: this.rootRef,
 	    name: rootName,
@@ -2734,7 +3171,7 @@ class TreeInspector {
 	      type === "hash" ||
 	      type === "array" ||
 	      (includeClasses && type === "class");
-	console.log('is branch', isBranch,includeClasses, type);
+	//console.log('is branch', isBranch,includeClasses, type);
 	const isRefable = (value && (t === "object" || t === "function")); // ok
 	const path = pathParts.join(".");
 
@@ -2750,6 +3187,8 @@ class TreeInspector {
 		depth,
 	    };
 	    this._indexNode(refNode);
+
+	    
 	    return refNode;
 	}
 
@@ -2774,6 +3213,12 @@ class TreeInspector {
 
 	this._indexNode(node);
 
+	// instance enrichment for objects
+	if (type === "hash") {
+	    this._enrichHashInstance(node, value);
+	}
+
+	
 	// if not a branch, we’re done
 	if (!isBranch) return node;
 
@@ -2788,15 +3233,61 @@ class TreeInspector {
 
 	node.children = [];
 
-	
 	if (type === "class") {
+	    const entries = this._classChildren(node, {
+		includeNonEnumerable,
+		// any other knobs you want to pass through
+	    });
+	    console.log('got this', entries);
+	    for (const entry of entries) {
+		const k = entry.name;
+		const v = entry.ref;
+
+		// Special: ensure prototype branch includes non-enumerables (class methods are non-enumerable)
+		const forceNonEnum =
+		      entry && entry.name === "prototype" && entry.type === "hash";
+
+		const childNode = this._parseNode({
+		    value: v,
+		    name: k,
+		    pathParts: pathParts.concat([k]),
+		    parentPath: path,
+		    depth: depth + 1,
+		    seen,
+		    maxDepth,
+		    includeNonEnumerable: forceNonEnum ? true : includeNonEnumerable,
+		    includeClasses,
+		});
+
+		// Preserve/enrich metadata coming from ClassInspector
+		if (entry && typeof entry === "object") {
+		    // keep any flags like isStatic, ownerKind, synthetic...
+		    for (const metaKey of Object.keys(entry)) {
+			if (metaKey === "children") continue; // TreeInspector owns children
+			if (metaKey === "ref") continue;      // TreeInspector owns ref
+			if (metaKey === "path") continue;     // TreeInspector owns path
+			if (metaKey === "pathParts") continue;
+			if (metaKey === "parentPath") continue;
+			if (metaKey === "depth") continue;
+			if (metaKey === "name") continue;
+			if (metaKey === "type") continue;     // TreeInspector may compute type
+			childNode[metaKey] = entry[metaKey];
+		    }
+		}
+
+		node.children.push(childNode);
+	    }
+
+	    return node;
+	}
+	if (0 &&type === "class") {
 	    // expects ClassInspectorTraits mixed into TreeInspector prototype
 	    // should return array of { name, value } pairs or node-like objects (your choice)
 	    const entries = this._classChildren(node, {
 		includeNonEnumerable,
 		// any other knobs you want to pass through
 	    });
-
+	    //console.log('got this', entries);
 	    for (const entry of entries) {
 		//coerce into something digestible.
 		const k = entry.name;
@@ -2855,6 +3346,7 @@ class TreeInspector {
 		  ? Reflect.ownKeys(value)
 		  : Object.keys(value);
 
+	    
 	    for (const k of keys) {
 		const v = value[k];
 		node.children.push(
@@ -2871,6 +3363,24 @@ class TreeInspector {
 		    })
 		);
 	    }
+
+	    this._appendInstanceProtoChildren(
+		node,
+		value,
+		{
+		    pathParts,
+		    depth,
+		    seen,
+		    maxDepth,
+		    includeNonEnumerable,
+		    includeClasses,
+		},
+		{
+		    includeSymbols: true,
+		    skipBuiltins: true,
+		}
+	    );
+	    
 	} else {
 	    for (let i = 0; i < value.length; i++) {
 		const k = String(i);
@@ -3058,6 +3568,8 @@ class TreeInspector {
 	    signature: node.signature ?? null,
 	    valuePreview: node.valuePreview ?? null,
 	    valueKind: node.valueKind ?? null,
+	    isStatic : node.isStatic ?? false,
+	    isInstance: node.isInstance ?? false,
 	    childCount: Array.isArray(node.children) ? node.children.length : 0,
 	    childrenPreview: Array.isArray(node.children)
 		? node.children.slice(0, childrenPreview).map(c => ({ name: c.name, type: c.type, path: c.path }))
@@ -3231,7 +3743,7 @@ class TreeInspector {
 	    });
 	}
     }
-
+    
     // ----------------------------
     // Helpers
     // ----------------------------
@@ -3328,6 +3840,10 @@ class TreeInspector {
 	return info;
     }
 }
+
+
+
+
 applyMixins(TreeInspector, ClassInspectorTraits);
 function factory(...args){
     return new TreeInspector(...args);

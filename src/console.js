@@ -54,7 +54,7 @@ function openConsole(
     if (!eventScope) eventScope = rootScope;
 
     const ctx = installLibs({});
-
+    if(!target) target =globalThis
     ctx.lib.context.build(ctx, {
 	target,
 	mount,
