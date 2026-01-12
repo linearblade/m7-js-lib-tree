@@ -244,7 +244,7 @@ function inspectAndShow(ctx, path) {
 function wireDetailEvents(ctx, info) {
     const { detailEl } = ctx;
 
-    const copyBtn = detailEl.querySelector("['data-copy-me']");
+    const copyBtn = detailEl.querySelector("[data-copy-me]");
     if(copyBtn){
 	copyBtn.onclick = async () => {
 	    copyToClipboard(info.path);
