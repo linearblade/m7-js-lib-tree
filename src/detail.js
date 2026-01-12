@@ -47,7 +47,7 @@ function setDetail(ctx, info) {
 	  canonicalPath !== info.path;
     
     detailEl.innerHTML = `
-    <div style="opacity:0.8;margin-bottom:5px" onclick="${copyToClipbard(info.path)}">${escapeHtml(info.path)}</div>
+    <div style="opacity:0.8;margin-bottom:5px" onclick="${copyToClipboard(info.path)}">${escapeHtml(info.path)}</div>
 
 ${
   showCanonical
