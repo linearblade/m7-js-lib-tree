@@ -47,7 +47,7 @@ function setDetail(ctx, info) {
 	  canonicalPath !== info.path;
     
     detailEl.innerHTML = `
-    <div style="opacity:0.8;margin-bottom:5px"  >${escapeHtml(info.path)} <button data-copy-me style="${chipCss()};padding:0 5px;">⧉</button> </div>
+    <div style="opacity:0.8;margin-bottom:5px"  >${escapeHtml(info.path)} <button data-copy-path style="${chipCss()};padding:0 5px;">⧉</button> </div>
 
 ${
   showCanonical
@@ -125,7 +125,7 @@ ${
         border-radius:10px;
         background:rgba(255,255,255,0.05);
       ">
-        <div style="opacity:0.8; margin-bottom:6px;">value</div>
+        <div style="opacity:0.8; margin-bottom:6px;">value <button data-copy-value style="${chipCss()};padding:0 5px;">⧉</button></div>
         <div style="white-space:pre-wrap;">${escapeHtml(info.valuePreview)}</div>
 	</div>
 	`
@@ -244,10 +244,16 @@ function inspectAndShow(ctx, path) {
 function wireDetailEvents(ctx, info) {
     const { detailEl } = ctx;
 
-    const copyBtn = detailEl.querySelector("[data-copy-me]");
-    if(copyBtn){
-	copyBtn.onclick = async () => {
+    const copyPathBtn = detailEl.querySelector("[data-copy-path]");
+    if(copyPathBtn){
+	copyPathBtn.onclick = async () => {
 	    ctx.lib.helpers.copyToClipboard(info.path);
+	}
+    }
+    const copyValueBtn = detailEl.querySelector("[data-copy-value]");
+    if(copyValueBtn){
+	copyValueBtn.onclick = async () => {
+	    ctx.lib.helpers.copyToClipboard(info.valuePreview);
 	}
     }
     
